@@ -1,0 +1,5 @@
+{
+  "supabase_url": "YOUR_PROJECT_URL",
+  "supabase_anon_key": "YOUR_SUPABASE_ANON_KEY",
+  "gemini_api_key": "YOUR_GEMINI_API_KEY"
+}
