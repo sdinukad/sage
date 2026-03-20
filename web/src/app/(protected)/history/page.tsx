@@ -6,8 +6,11 @@ import { Expense } from '@/shared/models';
 import ExpenseRow from '@/components/ExpenseRow';
 import FilterPills from '@/components/FilterPills';
 import { format, parseISO } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit2 } from 'lucide-react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
+import dynamic from 'next/dynamic';
+
+const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), { ssr: false });
 
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
 
@@ -15,6 +18,7 @@ export default function HistoryPage() {
   const { expenses: allExpenses, loading, hasFetched, refreshData } = useExpenseData();
   const [activeFilter, setActiveFilter] = useState('All');
   const [swipedId, setSwipedId] = useState<string | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   // Only show skeletons on the very first load before any data arrives
   const showSkeleton = loading && !hasFetched;
@@ -88,17 +92,30 @@ export default function HistoryPage() {
                 
                 <div className="card overflow-hidden divide-y divide-border/50">
                   {items.map((expense) => (
-                    <div key={expense.id} className="relative group">
-                      {/* Delete Overlay */}
+                    <div key={expense.id} className="relative group overflow-hidden">
+                      {/* Actions Overlay */}
                       <div 
-                        className={`absolute inset-y-0 right-0 w-[80px] bg-red-500 flex items-center justify-center text-white transition-transform duration-200 z-10 ${swipedId === expense.id ? 'translate-x-0' : 'translate-x-full'}`}
-                        onClick={() => handleDelete(expense.id)}
+                        className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${swipedId === expense.id ? 'translate-x-0' : 'translate-x-full'}`}
                       >
-                        <Trash2 size={24} />
+                        <div 
+                          className="w-1/2 bg-blue-500 flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors"
+                          onClick={() => {
+                            setEditingExpense(expense);
+                            setSwipedId(null);
+                          }}
+                        >
+                          <Edit2 size={24} />
+                        </div>
+                        <div 
+                          className="w-1/2 bg-red-500 flex items-center justify-center text-white cursor-pointer hover:bg-red-600 transition-colors"
+                          onClick={() => handleDelete(expense.id)}
+                        >
+                          <Trash2 size={24} />
+                        </div>
                       </div>
 
                       <div 
-                        className={`transition-transform duration-200 bg-surface ${swipedId === expense.id ? '-translate-x-[80px]' : 'translate-x-0'}`}
+                        className={`transition-transform duration-200 bg-surface ${swipedId === expense.id ? '-translate-x-[160px]' : 'translate-x-0'}`}
                         onClick={() => setSwipedId(swipedId === expense.id ? null : expense.id)}
                       >
                         <ExpenseRow 
@@ -107,6 +124,7 @@ export default function HistoryPage() {
                           category={expense.category}
                           note={expense.note || ''}
                           date={expense.date}
+                          showFullDate={true}
                         />
                       </div>
                     </div>
@@ -124,6 +142,12 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      <ExpenseModal 
+        isOpen={!!editingExpense} 
+        initialData={editingExpense} 
+        onClose={() => setEditingExpense(null)} 
+      />
     </div>
   );
 }

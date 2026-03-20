@@ -4,17 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import BottomSheet from './BottomSheet';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
-import { syncAddExpense } from '@/lib/sync';
+import { syncAddExpense, syncUpdateExpense } from '@/lib/sync';
 import { Expense } from '@/shared/models';
 import { useMemo } from 'react';
 
-interface AddExpenseModalProps {
+interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialData?: Expense | null;
 }
 
-export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpenseModalProps) {
+export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }: ExpenseModalProps) {
   const { user } = useAuth();
   const { categories } = useExpenseData();
 
@@ -32,12 +33,20 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
 
   useEffect(() => {
     if (isOpen) {
-      setAmount('');
-      setNote('');
-      setCategory('Other');
-      setTimeout(() => amountRef.current?.focus(), 400);
+      if (initialData) {
+        setAmount(initialData.amount.toString());
+        setNote(initialData.note || '');
+        setCategory(initialData.category);
+        setDate(initialData.date.split('T')[0]);
+      } else {
+        setAmount('');
+        setNote('');
+        setCategory('Other');
+        setDate(new Date().toISOString().split('T')[0]);
+        setTimeout(() => amountRef.current?.focus(), 400);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,17 +55,25 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     if (!user) return;
     setLoading(true);
 
-    const newExpense = {
-      id: crypto.randomUUID(),
-      user_id: user.id,
-      amount: parseFloat(amount),
-      note,
-      category,
-      date,
-      created_at: new Date().toISOString()
-    } as Expense;
-
-    await syncAddExpense(newExpense);
+    if (initialData) {
+      await syncUpdateExpense(initialData.id, {
+        amount: parseFloat(amount),
+        note,
+        category,
+        date
+      });
+    } else {
+      const newExpense = {
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        amount: parseFloat(amount),
+        note,
+        category,
+        date,
+        created_at: new Date().toISOString()
+      } as Expense;
+      await syncAddExpense(newExpense);
+    }
 
     onClose();
     if (onSuccess) onSuccess();
@@ -64,7 +81,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="New expense">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={initialData ? "Edit expense" : "New expense"}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Amount Input */}
         <div className="relative flex flex-col items-center pt-4">

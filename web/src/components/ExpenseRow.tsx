@@ -9,11 +9,13 @@ interface ExpenseRowProps {
   note: string;
   date: string;
   onDelete?: (id: string) => void;
+  showFullDate?: boolean;
 }
 
-const ExpenseRow: React.FC<ExpenseRowProps> = ({ amount, category, note, date }) => {
+const ExpenseRow: React.FC<ExpenseRowProps> = ({ amount, category, note, date, showFullDate }) => {
   const displayDate = () => {
     const d = new Date(date);
+    if (showFullDate) return format(d, 'MMM d, yyyy');
     if (isToday(d)) return 'Today';
     if (isYesterday(d)) return 'Yesterday';
     return format(d, 'MMM d');

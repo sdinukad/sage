@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
 
-const AddExpenseModal = dynamic(() => import('./AddExpenseModal'), { ssr: false, loading: () => null });
+const ExpenseModal = dynamic(() => import('./ExpenseModal'), { ssr: false, loading: () => null });
 
 // Theme Toggle Component
 function ThemeToggle() {
@@ -131,7 +131,7 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
       </nav>
 
       {hasRenderedModal && (
-        <AddExpenseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        <ExpenseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       )}
     </div>
   );
