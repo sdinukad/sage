@@ -11,8 +11,8 @@ Multi-platform AI expense tracker.
 ## Setup & Database
 
 ### Supabase Details
-- **Project URL:** `YOUR_PROJECT_URL`
-- **Publishable Key:** `YOUR_ANON_KEY`
+- **Project URL:** `https://your-project.supabase.co`
+- **Publishable Key:** `your-anon-key`
 
 ### Database Schema
 ```sql
