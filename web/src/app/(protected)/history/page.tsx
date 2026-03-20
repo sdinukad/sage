@@ -17,6 +17,8 @@ const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', cu
 export default function HistoryPage() {
   const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched, refreshData } = useExpenseData();
   const [activeFilter, setActiveFilter] = useState('All');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [swipedId, setSwipedId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<(Expense | Income) & { type?: 'expense' | 'income' } | null>(null);
 
@@ -32,9 +34,22 @@ export default function HistoryPage() {
 
   // Filter items locally
   const filteredData = useMemo(() => {
-    if (activeFilter === 'All') return allData;
-    return allData.filter(e => e.category === activeFilter);
-  }, [allData, activeFilter]);
+    let result = allData;
+    
+    if (activeFilter !== 'All') {
+      result = result.filter(e => e.category === activeFilter);
+    }
+    
+    if (startDate) {
+      result = result.filter(e => e.date >= startDate);
+    }
+    
+    if (endDate) {
+      result = result.filter(e => e.date <= endDate);
+    }
+    
+    return result;
+  }, [allData, activeFilter, startDate, endDate]);
 
   const handleDelete = async (id: string, type: 'expense' | 'income') => {
     if (type === 'expense') {
@@ -79,6 +94,33 @@ export default function HistoryPage() {
 
       {/* Filter Bar */}
       <FilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
+      {/* Date Range Filter */}
+      <div className="px-4 py-2 flex items-center gap-2">
+        <input 
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"
+          title="Start Date"
+        />
+        <span className="text-on-surface-variant font-medium">-</span>
+        <input 
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"
+          title="End Date"
+        />
+        {(startDate || endDate) && (
+          <button 
+            onClick={() => { setStartDate(''); setEndDate(''); }}
+            className="text-[12px] font-medium text-primary ml-1"
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {/* Expense List */}
       <div className="flex-1 px-4 py-6 pb-24">

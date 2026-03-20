@@ -3,22 +3,40 @@
 import HeroCard from '@/components/HeroCard';
 import ExpenseRow from '@/components/ExpenseRow';
 import { CATEGORY_COLORS } from '@/components/CategoryBadge';
-import Link from 'next/link';
-import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 import { syncDeleteExpense } from '@/lib/sync';
+import { format } from 'date-fns';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
 
 export default function Dashboard() {
-  const { recentExpenses, stats, loading, hasFetched } = useExpenseData();
-  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const { expenses, stats, loading, hasFetched } = useExpenseData();
 
-  const handleDelete = async (id: string) => {
-    await syncDeleteExpense(id);
-    setSwipedId(null);
-  };
+  // Compute daily spending for the last 7 days
+  const dailyData = useMemo(() => {
+    const data: { date: string; displayDate: string; amount: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = format(d, 'yyyy-MM-dd');
+      data.push({
+        date: dateString,
+        displayDate: format(d, 'EEE'), // e.g., Mon, Tue
+        amount: 0
+      });
+    }
+
+    expenses.forEach((exp: any) => {
+      const entry = data.find(d => d.date === exp.date);
+      if (entry) {
+        entry.amount += Number(exp.amount);
+      }
+    });
+    
+    return data;
+  }, [expenses]);
 
   // Only show skeletons on the very first load before any data arrives
   const showSkeleton = loading && !hasFetched;
@@ -75,61 +93,80 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Expenses */}
-      <div className="mt-4 flex flex-col gap-3 px-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-[20px] text-on-surface">Recent</h2>
-          {!showSkeleton && <Link href="/history" className="text-[13px] text-primary font-medium">See all</Link>}
+      {/* Analytics Charts */}
+      <div className="mt-6 flex flex-col gap-6 px-4 pb-8">
+        
+        {/* Category Pie Chart */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-serif text-[18px] text-on-surface">Category Spending</h2>
+          <div className="card h-[220px] p-4 flex flex-col pt-6 pb-6 bg-surface-container border border-border">
+            {showSkeleton ? (
+              <div className="w-full h-full bg-surface-container-high animate-pulse rounded-full max-w-[140px] mx-auto" />
+            ) : stats.breakdown.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.breakdown}
+                    dataKey="amount"
+                    nameKey="category"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={3}
+                    stroke="none"
+                  >
+                    {stats.breakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.category] || CATEGORY_COLORS['Other']} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => currencyFormatter.format(value)}
+                    contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    itemStyle={{ color: 'var(--on-surface)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+               <div className="flex items-center justify-center h-full text-on-surface-variant text-[14px]">
+                 No expenses this month
+               </div>
+            )}
+          </div>
         </div>
 
-        <div className="card overflow-hidden">
-          {showSkeleton ? (
-            <div className="flex flex-col divide-y divide-border">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="p-4 flex items-center justify-between animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-surface-container-high rounded-full" />
-                    <div className="flex flex-col gap-2">
-                      <div className="w-24 h-4 bg-surface-container-high rounded" />
-                      <div className="w-16 h-3 bg-surface-container rounded" />
-                    </div>
-                  </div>
-                  <div className="w-20 h-5 bg-surface-container-high rounded" />
-                </div>
-              ))}
-            </div>
-          ) : recentExpenses.length > 0 ? (
-            <div className="flex flex-col">
-              {recentExpenses.map((expense) => (
-                <div key={expense.id} className="relative group border-b border-border/50 last:border-0">
-                  {/* Delete Overlay */}
-                  <div 
-                    className={`absolute inset-y-0 right-0 w-[80px] bg-red-500 flex items-center justify-center text-white transition-transform duration-200 z-10 ${swipedId === expense.id ? 'translate-x-0' : 'translate-x-full'}`}
-                    onClick={() => handleDelete(expense.id)}
-                  >
-                    <Trash2 size={24} />
-                  </div>
-
-                  <div 
-                    className={`transition-transform duration-200 bg-surface ${swipedId === expense.id ? '-translate-x-[80px]' : 'translate-x-0'}`}
-                    onClick={() => setSwipedId(swipedId === expense.id ? null : expense.id)}
-                  >
-                    <ExpenseRow 
-                      id={expense.id}
-                      amount={Number(expense.amount)}
-                      category={expense.category}
-                      note={expense.note || ''}
-                      date={expense.date}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-12 text-center flex flex-col items-center gap-2">
-              <p className="text-on-surface-variant text-[14px]">No expenses yet. Tap + to add your first one.</p>
-            </div>
-          )}
+        {/* Last 7 Days Bar Chart */}
+        <div className="flex flex-col gap-2">
+          <h2 className="font-serif text-[18px] text-on-surface">Last 7 Days</h2>
+          <div className="card h-[220px] p-4 pt-6 bg-surface-container border border-border">
+            {showSkeleton ? (
+              <div className="w-full h-full bg-surface-container-high animate-pulse rounded-lg" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="displayDate" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: 'var(--on-surface-variant)' }} 
+                    dy={10}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'var(--surface-container-high)' }}
+                    formatter={(value: number) => [currencyFormatter.format(value), 'Spent']}
+                    contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    labelStyle={{ color: 'var(--on-surface-variant)', marginBottom: '4px' }}
+                  />
+                  <Bar 
+                    dataKey="amount" 
+                    fill="var(--primary)" 
+                    radius={[4, 4, 0, 0]} 
+                    maxBarSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
       </div>
     </div>

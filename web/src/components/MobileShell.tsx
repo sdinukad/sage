@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { House, Clock, Sparkles, User, Plus, Bell, Sun, Moon, WifiOff, Tag } from 'lucide-react';
+import { House, Clock, Sparkles, User, Plus, Sun, Moon, WifiOff, Tag, Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
@@ -65,25 +65,17 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
     { label: 'Chat', icon: Sparkles, href: '/chat' },
     { label: 'Dashboard', icon: House, href: '/dashboard' },
     { label: 'History', icon: Clock, href: '/history' },
-    { label: 'Tags', icon: Tag, href: '/categories' },
-    { label: 'Profile', icon: User, href: '/profile' },
+    { label: 'Settings', icon: Settings, href: '/profile' },
   ];
 
-  const userInitial = user?.email?.[0].toUpperCase() || '?';
 
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative shadow-xl">
       {/* Sticky Header */}
       <header className="sticky-header sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 flex items-center justify-between">
         <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <ThemeToggle />
-          <button className="p-2 text-on-surface-variant hover:text-on-surface transition-colors">
-            <Bell size={20} />
-          </button>
-          <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface font-medium text-sm ml-1">
-            {userInitial}
-          </div>
         </div>
       </header>
 
