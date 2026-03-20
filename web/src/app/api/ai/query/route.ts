@@ -1,6 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Expense } from '@/shared/models';
+import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+
+let genAI: GoogleGenerativeAI;
+let model: GenerativeModel;
+
+function getModel() {
+  if (!model) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+  }
+  return model;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,8 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query and expenses are required' }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const currentModel = getModel();
 
     const prompt = `You are Sage, an AI expense assistant. Given the user's query and their list of expenses, provide a helpful answer and identify which expense IDs (if any) are relevant.
 Expenses: ${JSON.stringify(expenses)}
@@ -22,13 +31,13 @@ Return ONLY a JSON object:
   "matchedIds": ["uuid1", "uuid2"]
 }`;
     
-    const result = await model.generateContent(prompt);
+    const result = await currentModel.generateContent(prompt);
     const text = result.response.text().trim().replace(/```json/g, '').replace(/```/g, '');
     const data = JSON.parse(text);
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('AI Query Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

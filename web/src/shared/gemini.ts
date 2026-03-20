@@ -1,33 +1,45 @@
-import { Category, Expense } from './models';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Category, Expense, ChatResponse, Income, ChatAction } from './models';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = 'gemini-2.0-flash';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const MODEL_NAME = 'gemini-2.5-flash';
 
-async function callGemini(prompt: string): Promise<any> {
-    const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                response_mime_type: "application/json",
-            }
-        }),
-    });
+// Initialize the SDK
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-    if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.statusText}`);
-    }
+interface GeminiResponse {
+    answer?: string;
+    actions?: ChatAction[];
+}
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+async function callGemini(prompt: string): Promise<GeminiResponse> {
     try {
-        return JSON.parse(text);
-    } catch (e) {
-        return text;
+        console.log('Calling Gemini SDK...');
+        const model = genAI.getGenerativeModel({ 
+            model: MODEL_NAME,
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        console.log('Gemini raw text received (first 100 chars):', text.substring(0, 100));
+
+        try {
+            return JSON.parse(text) as GeminiResponse;
+        } catch (e) {
+            console.warn('JSON.parse failed, trying regex match', e);
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try {
+                    return JSON.parse(jsonMatch[0]) as GeminiResponse;
+                } catch (innerE) {
+                    console.error('Regex JSON match parse failed', innerE);
+                }
+            }
+            return { answer: text, actions: [] };
+        }
+    } catch (err: unknown) {
+        console.error('Error in callGemini with SDK:', err);
+        throw err;
     }
 }
 
@@ -35,76 +47,135 @@ export async function categoriseExpense(note: string): Promise<Category> {
     const prompt = `Given this expense description, return ONLY one of these categories with no other text: Food, Transport, Bills, Entertainment, Health, Shopping, Other. Description: ${note}`;
     
     try {
-        // Adjusting call to return plain text for single category
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-            }),
-        });
-        const data = await response.json();
-        const category = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() as Category;
+        const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+        const result = await model.generateContent(prompt);
+        const category = result.response.text().trim() as Category;
         
         const validCategories: Category[] = ["Food", "Transport", "Bills", "Entertainment", "Health", "Shopping", "Other"];
         return validCategories.includes(category) ? category : "Other";
     } catch (error) {
+        console.error('Error in categoriseExpense:', error);
         return "Other";
     }
 }
 
-export async function parseNaturalQuery(
-    query: string, 
-    expenses: Expense[]
-): Promise<{ answer: string; matchedIds: string[] }> {
-    const prompt = `You are an expense assistant. Answer the user's question using only the provided expense data. Return ONLY this JSON:
-    { "answer": string, "matchedIds": string[] }
+export async function processSageChat(
+    message: string,
+    expenses: Expense[],
+    incomes: Income[] = []
+): Promise<ChatResponse> {
+    const prompt = `You are Sage, a helpful personal accountant. 
+    Analyze the user's message, current expenses, and current incomes. 
+    You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    
+    For each request in the message, identify the intent:
+    1. QUERY: Ask for information about spending or income.
+    2. ADD_EXPENSE: Record a new expense.
+    3. ADD_INCOME: Record a new income.
+    4. EDIT_EXPENSE: Modify an existing expense.
+    5. EDIT_INCOME: Modify an existing income.
+
+    Income Categories: Salary, Bonus, Investment, Gift, Other
+    Expense Categories: Food, Transport, Bills, Entertainment, Health, Shopping, Other
+
+    Return ONLY this JSON structure:
+    {
+        "answer": "A human-like greeting and summary",
+        "actions": [
+            {
+                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
+                "data": {
+                    "matchedIds": ["uuid", ...],
+                    "newExpense": { "amount": number, "category": "...", "note": "...", "date": "ISO string" },
+                    "newIncome": { "amount": number, "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "editExpense": { "id": "uuid", "changes": { ... } },
+                    "editIncome": { "id": "uuid", "changes": { ... } }
+                },
+                "confirmationText": "Clear confirmation question for this action"
+            }
+        ]
+    }
+
+    Current Date: ${new Date().toISOString()}
     Expenses: ${JSON.stringify(expenses)}
-    Question: ${query}`;
+    Incomes: ${JSON.stringify(incomes)}
+    User Message: ${message}`;
 
     try {
         const result = await callGemini(prompt);
         return {
-            answer: result.answer || "Sorry, I couldn't understand that.",
-            matchedIds: result.matchedIds || []
+            answer: result.answer || "Processed your request.",
+            actions: result.actions || []
         };
     } catch (error) {
-        return { answer: "Sorry, I couldn't understand that.", matchedIds: [] };
+        console.error("Sage Chat Logic Error:", error);
+        return {
+            answer: "Sorry, I'm having trouble processing that right now.",
+            actions: []
+        };
     }
 }
 
-export async function parseEditIntent(
-    message: string, 
-    expenses: Expense[]
-): Promise<{
-    expenseId: string | null,
-    changes: Partial<Pick<Expense, 'amount'|'category'|'date'|'note'>> | null,
-    confirmationText: string
-}> {
-    const prompt = `You are an expense editor. Identify which expense the user wants to edit and what changes to make. Return ONLY this JSON:
-    {
-      "expenseId": string or null,
-      "changes": { "amount"?: number, "category"?: string, "date"?: ISO string, "note"?: string } or null,
-      "confirmationText": string (e.g. 'Change the Uber on March 5 from 850 to 1200?')
-    }
-    If unclear, set expenseId and changes to null, ask for clarification in confirmationText.
-    Expenses: ${JSON.stringify(expenses)}
-    Message: ${message}`;
+export async function processSageChatStream(
+    message: string,
+    expenses: Expense[],
+    incomes: Income[] = []
+): Promise<ReadableStream> {
+    const prompt = `You are Sage, a helpful personal accountant. 
+    Analyze the user's message, current expenses, and current incomes. 
+    You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    
+    For each request in the message, identify the intent:
+    1. QUERY: Ask for information about spending or income.
+    2. ADD_EXPENSE: Record a new expense.
+    3. ADD_INCOME: Record a new income.
+    4. EDIT_EXPENSE: Modify an existing expense.
+    5. EDIT_INCOME: Modify an existing income.
 
-    try {
-        const result = await callGemini(prompt);
-        return {
-            expenseId: result.expenseId || null,
-            changes: result.changes || null,
-            confirmationText: result.confirmationText || "I'm not sure what you want to change."
-        };
-    } catch (error) {
-        return {
-            expenseId: null,
-            changes: null,
-            confirmationText: "Sorry, I couldn't parse your edit request."
-        };
+    Income Categories: Salary, Bonus, Investment, Gift, Other
+    Expense Categories: Food, Transport, Bills, Entertainment, Health, Shopping, Other
+
+    Return ONLY this JSON structure:
+    {
+        "answer": "A human-like greeting and summary",
+        "actions": [
+            {
+                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
+                "data": {
+                    "matchedIds": ["uuid", ...],
+                    "newExpense": { "amount": number, "category": "...", "note": "...", "date": "ISO string" },
+                    "newIncome": { "amount": number, "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "editExpense": { "id": "uuid", "changes": { ... } },
+                    "editIncome": { "id": "uuid", "changes": { ... } }
+                },
+                "confirmationText": "Clear confirmation question for this action"
+            }
+        ]
     }
+
+    Current Date: ${new Date().toISOString()}
+    Expenses: ${JSON.stringify(expenses)}
+    Incomes: ${JSON.stringify(incomes)}
+    User Message: ${message}`;
+
+    const model = genAI.getGenerativeModel({ 
+        model: MODEL_NAME,
+        generationConfig: { responseMimeType: "application/json" }
+    });
+    
+    const result = await model.generateContentStream(prompt);
+    
+    const encoder = new TextEncoder();
+    return new ReadableStream({
+        async start(controller) {
+            try {
+                for await (const chunk of result.stream) {
+                    controller.enqueue(encoder.encode(chunk.text()));
+                }
+                controller.close();
+            } catch (err) {
+                controller.error(err);
+            }
+        }
+    });
 }

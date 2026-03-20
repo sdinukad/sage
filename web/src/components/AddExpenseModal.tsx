@@ -1,29 +1,58 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { X, Sparkles, Check } from 'lucide-react';
+import { Sparkles, Check } from 'lucide-react';
+import BottomSheet from './BottomSheet';
+import { useAuth } from '@/context/AuthContext';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 const categories = ['Food', 'Transport', 'Bills', 'Entertainment', 'Health', 'Shopping', 'Other'];
 
+// Simple module-level cache for AI suggestions during a session
+const suggestionCache = new Map<string, string>();
+
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpenseModalProps) {
+  const { user } = useAuth();
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [category, setCategory] = useState('Other');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [aiSuggesting, setAiSuggesting] = useState(false);
-  const [aiResult, setAiResult] = useState<string | null>(null);
+  
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestedCategory, setSuggestedCategory] = useState<string | null>(null);
+  const [hasAcceptedSuggestion, setHasAcceptedSuggestion] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const suggestCategory = useCallback(async (noteText: string) => {
+  const amountRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setAmount('');
+      setNote('');
+      setCategory('Other');
+      setSuggestedCategory(null);
+      setHasAcceptedSuggestion(false);
+      setTimeout(() => amountRef.current?.focus(), 400);
+    }
+  }, [isOpen]);
+
+  const fetchAiSuggestion = useCallback(async (noteText: string) => {
     if (!noteText || noteText.length < 3) return;
-    setAiSuggesting(true);
+    
+    // Check cache first
+    const cached = suggestionCache.get(noteText.trim().toLowerCase());
+    if (cached) {
+      setSuggestedCategory(cached);
+      return;
+    }
+
+    setIsSuggesting(true);
     try {
       const res = await fetch('/api/ai/categorise', {
         method: 'POST',
@@ -32,33 +61,43 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
       });
       const data = await res.json();
       if (data.category && categories.includes(data.category)) {
-        setCategory(data.category);
-        setAiResult(data.category);
+        suggestionCache.set(noteText.trim().toLowerCase(), data.category);
+        setSuggestedCategory(data.category);
       }
     } catch (e) {
-      console.error(e);
+      console.error('AI Suggestion Error:', e);
     } finally {
-      setAiSuggesting(false);
+      setIsSuggesting(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!note) {
-      setAiResult(null);
+    if (!note || hasAcceptedSuggestion) {
+      if (!note) {
+        setSuggestedCategory(null);
+        setHasAcceptedSuggestion(false);
+      }
       return;
     }
     const timeout = setTimeout(() => {
-      suggestCategory(note);
+      fetchAiSuggestion(note);
     }, 500);
     return () => clearTimeout(timeout);
-  }, [note, suggestCategory]);
+  }, [note, fetchAiSuggestion, hasAcceptedSuggestion]);
+
+  const handleAcceptSuggestion = () => {
+    if (suggestedCategory) {
+      setCategory(suggestedCategory);
+      setHasAcceptedSuggestion(true);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!amount || parseFloat(amount) <= 0) return;
     
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setLoading(true);
 
     const { error } = await supabase.from('expenses').insert({
       user_id: user.id,
@@ -71,100 +110,106 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     if (error) {
       alert(error.message);
     } else {
-      setAmount('');
-      setNote('');
-      setCategory('Other');
-      setAiResult(null);
-      onSuccess();
+      onClose();
+      if (onSuccess) onSuccess();
+      // Simple refresh for other components
+      window.dispatchEvent(new CustomEvent('expense-added'));
     }
     setLoading(false);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="card w-full max-w-md relative animate-in zoom-in-95 duration-300">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-        >
-          <X size={20} />
-        </button>
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="New expense">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Amount Input */}
+        <div className="relative flex flex-col items-center pt-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-ink-3 font-mono text-sm mb-2">LKR</span>
+            <input
+              ref={amountRef}
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-48 bg-transparent border-none border-b-2 border-border focus:border-sage-500 text-center font-mono text-[42px] text-ink outline-none transition-colors"
+              required
+            />
+          </div>
+        </div>
 
-        <h2 className="text-xl font-bold mb-6">Add New Expense</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Description</label>
-            <div className="relative">
-              <input
-                type="text"
-                className="input-field pr-10"
-                placeholder="What did you spend on?"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                required
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                {aiSuggesting ? (
-                  <Sparkles size={16} className="text-[#16a34a] animate-pulse" />
-                ) : aiResult ? (
-                  <div className="flex items-center gap-1 text-[#16a34a] text-[10px] font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-100">
-                    AI <Check size={10} />
-                  </div>
-                ) : null}
-              </div>
+        {/* AI Suggestion */}
+        <div className={`flex justify-center transition-all duration-300 ${suggestedCategory || isSuggesting ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1 pointer-events-none h-0'}`}>
+          {isSuggesting ? (
+            <div className="flex items-center gap-2 text-sage-300 animate-pulse text-xs">
+              <Sparkles size={14} />
+              <span>Sage is thinking...</span>
             </div>
+          ) : suggestedCategory && (
+            <button
+              type="button"
+              onClick={handleAcceptSuggestion}
+              disabled={hasAcceptedSuggestion}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${hasAcceptedSuggestion ? 'bg-sage-500 text-white' : 'bg-sage-100 text-sage-700'}`}
+            >
+              <Sparkles size={14} />
+              <span>✦ Sage suggests: {suggestedCategory}</span>
+              {hasAcceptedSuggestion && <Check size={14} />}
+            </button>
+          )}
+        </div>
+
+        {/* Fields */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Note</label>
+            <input
+              type="text"
+              placeholder="What was this for?"
+              value={note}
+              onChange={(e) => {
+                setNote(e.target.value);
+                setHasAcceptedSuggestion(false);
+              }}
+              className="input-field"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Amount</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input-field pl-7"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-ink-3 uppercase ml-1">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="input-field appearance-none"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Date</label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-ink-3 uppercase ml-1">Date</label>
               <input
                 type="date"
-                className="input-field"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                className="input-field"
                 required
               />
             </div>
           </div>
+        </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Category</label>
-            <select
-              className="input-field appearance-none bg-no-repeat bg-[right_1rem_center]"
-              style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpolyline points=%276 9 12 15 18 9%27%3E%3C/polyline%3E%3C/svg%3E")' }}
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <button type="submit" className="btn-primary w-full py-3 mt-4" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Expense'}
-          </button>
-        </form>
-      </div>
-    </div>
+        <button 
+          type="submit" 
+          disabled={loading || !amount}
+          className="btn-primary w-full mt-2"
+        >
+          {loading ? 'Saving...' : 'Save expense'}
+        </button>
+      </form>
+    </BottomSheet>
   );
 }

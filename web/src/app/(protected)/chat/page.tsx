@@ -2,252 +2,289 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Expense } from '@/shared/models';
-import { MessageSquare, Edit3, Send, Sparkles, Check, X, Loader2 } from 'lucide-react';
-import CategoryBadge from '@/components/CategoryBadge';
-import { format } from 'date-fns';
+import { ChatResponse, ChatAction } from '@/shared/models';
+import { Send, Sparkles } from 'lucide-react';
+import ChatBubble from '@/components/ChatBubble';
+import ConfirmationCard from '@/components/ConfirmationCard';
+import { CATEGORY_COLORS } from '@/components/CategoryBadge';
+import { useAuth } from '@/context/AuthContext';
+import { useExpenseData } from '@/context/ExpenseDataContext';
+
+const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 });
+
+type ChatMode = 'ask' | 'edit';
 
 interface Message {
   id: string;
-  type: 'user' | 'ai';
+  type: 'user' | 'assistant';
   content: string;
-  matchedExpenses?: Expense[];
-  editIntent?: {
-    expenseId: string;
-    changes: any;
-    confirmationText: string;
-  };
+  actions?: ChatAction[];
+  resolvedActions?: string[];
 }
 
 export default function ChatPage() {
-  const [activeTab, setActiveTab] = useState<'ask' | 'edit'>('ask');
+  const { user } = useAuth();
+  const { expenses, refreshData } = useExpenseData();
+  const [mode] = useState<ChatMode>('ask');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    const fetchExpenses = async () => {
-      const { data } = await supabase.from('expenses').select('*');
-      if (data) setExpenses(data);
-    };
-    fetchExpenses();
-  }, []);
-
+  // Auto-scroll when messages change (not on loading toggle)
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
     }
-  }, [messages, loading]);
+  }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  // Scroll when loading starts (one-time, not on loading=false)
+  const prevLoadingRef = useRef(false);
+  useEffect(() => {
+    if (loading && !prevLoadingRef.current && scrollRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+    }
+    prevLoadingRef.current = loading;
+  }, [loading]);
+
+  const handleSend = async (text: string = input) => {
+    if (!text.trim() || loading) return;
 
     const userMessage: Message = {
       id: Math.random().toString(36).substring(7),
       type: 'user',
-      content: input,
+      content: text,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setLoading(true);
 
     try {
-      const endpoint = activeTab === 'ask' ? '/api/ai/query' : '/api/ai/edit-intent';
-      const body = activeTab === 'ask' 
-        ? { query: input, expenses } 
-        : { message: input, expenses };
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ message: text, mode }),
       });
 
-      const data = await res.json();
+      if (!res.body) throw new Error('No readable stream from API');
 
-      if (activeTab === 'ask') {
-        const matched = expenses.filter(e => data.matchedIds?.includes(e.id));
-        setMessages((prev) => [...prev, {
-          id: Math.random().toString(36).substring(7),
-          type: 'ai',
-          content: data.answer,
-          matchedExpenses: matched
-        }]);
-      } else {
-        setMessages((prev) => [...prev, {
-          id: Math.random().toString(36).substring(7),
-          type: 'ai',
-          content: data.confirmationText,
-          editIntent: data.expenseId ? {
-            expenseId: data.expenseId,
-            changes: data.changes,
-            confirmationText: data.confirmationText
-          } : undefined
-        }]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let rawJson = '';
+      
+      const msgId = Math.random().toString(36).substring(7);
+      setMessages((prev) => [...prev, { id: msgId, type: 'assistant', content: '' }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        rawJson += decoder.decode(value, { stream: true });
+        
+        const match = rawJson.match(/"answer"\s*:\s*"([\s\S]*?)(?:",\s*"actions"|$)/);
+        if (match) {
+            const partialAnswer = match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content: partialAnswer } : m));
+        }
       }
+
+      // Stream fully completed, parse the compiled payload
+      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '');
+      const data: ChatResponse = JSON.parse(cleanJson);
+      
+      // Ensure the exact final answer text and actions are committed
+      setMessages((prev) => prev.map(m => m.id === msgId ? { ...m, content: data.answer, actions: data.actions || [], resolvedActions: [] } : m));
+
     } catch (e) {
       console.error(e);
       setMessages((prev) => [...prev, {
         id: Math.random().toString(36).substring(7),
-        type: 'ai',
-        content: "Sorry, I encountered an error processing your request."
+        type: 'assistant',
+        content: "I'm having trouble connecting to Sage AI. Please try again later."
       }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const confirmEdit = async (msgId: string, intent: any) => {
-    setLoading(true);
-    const { error } = await supabase
-      .from('expenses')
-      .update(intent.changes)
-      .eq('id', intent.expenseId);
+  const handleConfirmAction = async (msgId: string, actionIndex: number) => {
+    const msg = messages.find(m => m.id === msgId);
+    if (!msg || !msg.actions) return;
+    const action = msg.actions[actionIndex];
+    if (!action) return;
 
-    if (error) {
-      alert(error.message);
-    } else {
-      setMessages((prev) => prev.map(m => 
-        m.id === msgId ? { ...m, editIntent: undefined, content: "✓ Expense updated successfully!" } : m
-      ));
-      // Refresh expenses
-      const { data } = await supabase.from('expenses').select('*');
-      if (data) setExpenses(data);
+    if (!user) return;
+
+    let success = false;
+    try {
+      if (action.type === 'edit_expense' && action.data?.editExpense) {
+        const { error } = await supabase
+          .from('expenses')
+          .update(action.data.editExpense.changes)
+          .eq('id', action.data.editExpense.id);
+        if (!error) success = true;
+      } else if (action.type === 'add_expense' && action.data?.newExpense) {
+        const { error } = await supabase.from('expenses').insert({
+          ...action.data.newExpense,
+          user_id: user.id
+        });
+        if (!error) success = true;
+      } else if (action.type === 'add_income' && action.data?.newIncome) {
+        const { error } = await supabase.from('incomes').insert({
+          ...action.data.newIncome,
+          user_id: user.id
+        });
+        if (!error) success = true;
+      } else if (action.type === 'edit_income' && action.data?.editIncome) {
+        const { error } = await supabase
+          .from('incomes')
+          .update(action.data.editIncome.changes)
+          .eq('id', action.data.editIncome.id);
+        if (!error) success = true;
+      }
+    } catch (err) {
+      console.error('Action error:', err);
     }
-    setLoading(false);
+
+    if (success) {
+      setMessages((prev) => prev.map(m => 
+        m.id === msgId ? { 
+          ...m, 
+          resolvedActions: [...(m.resolvedActions || []), actionIndex.toString()]
+        } : m
+      ));
+      refreshData();
+    }
   };
 
+  const examplePrompts = [
+    "How much did I spend this month?",
+    "What's my biggest category?",
+    "Show food expenses",
+    "Got my salary 120k"
+  ];
+
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto animate-in fade-in duration-500">
-      <div className="card flex-1 flex flex-col p-0 overflow-hidden">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100 dark:border-gray-800">
-          <button
-            onClick={() => setActiveTab('ask')}
-            className={`flex-1 py-4 flex items-center justify-center gap-2 font-medium transition-colors ${
-              activeTab === 'ask' ? 'text-[#16a34a] border-b-2 border-[#16a34a]' : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <MessageSquare size={18} />
-            Ask
-          </button>
-          <button
-            onClick={() => setActiveTab('edit')}
-            className={`flex-1 py-4 flex items-center justify-center gap-2 font-medium transition-colors ${
-              activeTab === 'edit' ? 'text-[#16a34a] border-b-2 border-[#16a34a]' : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <Edit3 size={18} />
-            Edit
-          </button>
-        </div>
-
-        {/* Chat Area */}
-        <div 
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth"
-        >
-          {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                <Sparkles size={32} className="text-[#16a34a]" />
+    <div className="flex flex-col absolute inset-0 top-[56px] bottom-[calc(64px+env(safe-area-inset-bottom))]">
+      {/* Chat Area — scrollable */}
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 no-scrollbar"
+      >
+        {messages.length === 0 && (
+          <div className="flex flex-col gap-6 mt-8 animate-[fadeSlideUp_0.4s_ease-out]">
+            <div className="flex flex-col items-center text-center gap-2 mb-4">
+              <div className="w-16 h-16 bg-sage-50 rounded-2xl flex items-center justify-center text-sage-500 mb-2">
+                <Sparkles size={32} />
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-white">Hi, I'm Sage Assistant</h3>
-                <p className="text-sm">
-                  {activeTab === 'ask' 
-                    ? "Ask me things like 'How much did I spend on food this week?'"
-                    : "Try 'Change my lunch today to $15'"}
-                </p>
+              <h2 className="font-serif text-[24px] text-sage-900 dark:text-white">Hello, I&apos;m Sage</h2>
+              <p className="text-[14px] text-ink-3 max-w-[240px]">Your personal financial assistant. How can I help you today?</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className="text-[12px] font-medium text-ink-3 uppercase tracking-wider ml-1">Suggested:</p>
+              <div className="flex flex-col gap-2">
+                {examplePrompts.map((prompt) => (
+                  <button 
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    className="px-5 py-3.5 bg-white dark:bg-gray-900 border border-border text-ink rounded-2xl text-[14px] font-medium text-left active:scale-[0.98] transition-all hover:border-sage-300 group flex items-center justify-between"
+                  >
+                    {prompt}
+                    <span className="text-sage-300 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] space-y-3 ${msg.type === 'user' ? 'order-2' : ''}`}>
-                <div className={`p-4 rounded-2xl shadow-sm ${
-                  msg.type === 'user' 
-                    ? 'bg-[#16a34a] text-white rounded-tr-none' 
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-none'
-                }`}>
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
-                </div>
-
-                {/* Match Cards for "Ask" */}
-                {msg.matchedExpenses && msg.matchedExpenses.length > 0 && (
-                  <div className="grid grid-cols-1 gap-2">
-                    {msg.matchedExpenses.map((exp) => (
-                      <div key={exp.id} className="card p-3 flex items-center justify-between border-l-4 border-l-[#16a34a]">
-                        <div>
-                          <p className="text-sm font-bold">${Number(exp.amount).toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">{exp.note || exp.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <CategoryBadge category={exp.category} className="text-[10px]" />
-                          <p className="text-[10px] text-gray-400 mt-1">{format(new Date(exp.date), 'MMM d')}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Confirm Card for "Edit" */}
-                {msg.editIntent && (
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/30 p-4 rounded-xl space-y-3">
-                    <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-wider">Confirm Changes</p>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => confirmEdit(msg.id, msg.editIntent)}
-                        className="flex-1 bg-[#16a34a] text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
-                      >
-                        <Check size={16} /> Confirm
-                      </button>
-                      <button 
-                        onClick={() => setMessages(m => m.filter(x => x.id !== msg.id))}
-                        className="flex-1 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 py-2 rounded-lg text-sm font-bold border border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2"
-                      >
-                        <X size={16} /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl rounded-tl-none flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin text-gray-400" />
-                <span className="text-xs text-gray-400 font-medium">Sage is thinking...</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Input area */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-          <div className="relative flex items-center">
-            <input
-              type="text"
-              placeholder={activeTab === 'ask' ? "Ask about your expenses..." : "Describe what to change..."}
-              className="input-field pr-12 py-3 shadow-sm"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            />
-            <button 
-              onClick={handleSend}
-              disabled={!input.trim() || loading}
-              className="absolute right-2 p-2 bg-[#16a34a] text-white rounded-lg hover:bg-[#15803d] transition-colors disabled:opacity-50"
-            >
-              <Send size={18} />
-            </button>
           </div>
+        )}
+
+        {messages.map((msg) => (
+          <div key={msg.id} className="flex flex-col">
+            <ChatBubble role={msg.type} content={msg.content} />
+            
+            {/* Matched Expenses */}
+            {msg.type === 'assistant' && msg.actions?.some(a => a.type === 'query' && a.data?.matchedIds) && (
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x ml-2 my-2 transition-all">
+                {expenses.filter(e => msg.actions?.find(a => a.type === 'query')?.data?.matchedIds?.includes(e.id)).map(exp => (
+                  <div key={exp.id} className="card min-w-[160px] p-4 flex flex-col gap-2 snap-start border-sage-100 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[exp.category] || CATEGORY_COLORS['Other'] }} />
+                      <span className="text-[10px] text-ink-3 font-medium uppercase">{exp.category}</span>
+                    </div>
+                    <span className="font-mono text-[20px] text-ink font-semibold">
+                      {currencyFormatter.format(Number(exp.amount))}
+                    </span>
+                    <span className="text-[12px] text-ink-3 truncate">{exp.note || 'No description'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Confirmation Actions */}
+            {msg.type === 'assistant' && msg.actions?.map((action, idx) => {
+              const isResolved = msg.resolvedActions?.includes(idx.toString());
+              if (['edit_expense', 'add_expense', 'add_income', 'edit_income'].includes(action.type) && !isResolved) {
+                return (
+                  <div key={idx} className="ml-2 animate-[fadeSlideUp_0.3s_ease-out]">
+                    <ConfirmationCard 
+                      text={action.confirmationText || ''}
+                      onConfirm={() => handleConfirmAction(msg.id, idx)}
+                      onCancel={() => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, resolvedActions: [...(m.resolvedActions || []), idx.toString()] } : m))}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        ))}
+
+        {/* Thinking indicator — no entrance animation to avoid flicker */}
+        {loading && (
+          <ChatBubble role="assistant" content="" isThinking />
+        )}
+      </div>
+
+      {/* Fixed Input Area at bottom */}
+      <div className="flex-shrink-0 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t border-border p-3">
+        <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-border rounded-[24px]">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            placeholder="Ask anything..."
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            className="flex-1 bg-transparent border-none py-1.5 text-[15px] text-ink outline-none resize-none no-scrollbar font-sans"
+          />
+          <button 
+            onClick={() => handleSend()}
+            disabled={!input.trim() || loading}
+            className="w-10 h-10 rounded-full bg-sage-500 text-white flex items-center justify-center flex-shrink-0 active:scale-95 disabled:opacity-50 transition-all shadow-md"
+          >
+            <Send size={18} />
+          </button>
         </div>
       </div>
     </div>

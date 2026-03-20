@@ -3,39 +3,233 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 245, 245, 245;
-  --background-end-rgb: 255, 255, 255;
-  --primary: 22, 163, 74; /* #16a34a */
+  /* Light Mode Palette */
+  --background: #faf9f6;
+  --surface: #faf9f6;
+  --surface-bright: #faf9f6;
+  --surface-container: #ecefe9;
+  --surface-container-high: #e5e9e3;
+  --surface-container-highest: #dee4dc;
+  --surface-container-low: #f3f4ef;
+  --surface-container-lowest: #ffffff;
+  --surface-dim: #d5dcd3;
+  --surface-tint: #516354;
+  --surface-variant: #dee4dc;
+  
+  --on-background: #2e342f;
+  --on-surface: #2e342f;
+  --on-surface-variant: #5a615b;
+  --outline: #767c76;
+  --outline-variant: #adb4ac;
+  
+  --primary: #516354;
+  --primary-container: #d3e8d5;
+  --primary-dim: #455749;
+  --primary-fixed: #d3e8d5;
+  --primary-fixed-dim: #c5dac7;
+  --on-primary: #e9fdea;
+  --on-primary-container: #445648;
+  --on-primary-fixed: #324336;
+  --on-primary-fixed-variant: #4e6051;
+  
+  --secondary: #536354;
+  --secondary-container: #d5e7d4;
+  --secondary-dim: #475749;
+  --secondary-fixed: #d5e7d4;
+  --secondary-fixed-dim: #c7d9c6;
+  --on-secondary: #ebfeea;
+  --on-secondary-container: #455647;
+  --on-secondary-fixed: #334335;
+  --on-secondary-fixed-variant: #4f6051;
+  
+  --tertiary: #5c605b;
+  --tertiary-container: #f2f5ee;
+  --tertiary-dim: #505450;
+  --tertiary-fixed: #f2f5ee;
+  --tertiary-fixed-dim: #e3e6e0;
+  --on-tertiary: #f7faf3;
+  --on-tertiary-container: #595d58;
+  --on-tertiary-fixed: #474b46;
+  --on-tertiary-fixed-variant: #636762;
 }
 
-@media (prefers-color-scheme: dark) {
+.dark {
+  --background: #121212;
+  --surface: #121412;
+  --surface-bright: #383a38;
+  --surface-container: #1e201e;
+  --surface-container-high: #262826;
+  --surface-container-highest: #313331;
+  --surface-container-low: #1a1c1a;
+  --surface-container-lowest: #0d0f0d;
+  --surface-dim: #0f110f;
+  --surface-tint: #8bb092;
+  --surface-variant: #313331;
+  
+  --on-background: #e2e4e2;
+  --on-surface: #e2e4e2;
+  --on-surface-variant: #c1c9c1;
+  --outline: #8a918a;
+  --outline-variant: #404841;
+  
+  --primary: #a0d2a4;
+  --primary-container: #2c4631;
+  --primary-dim: #8bb092;
+  --primary-fixed: #bcfeba;
+  --primary-fixed-dim: #a0d2a4;
+  --on-primary: #00390f;
+  --on-primary-container: #bcfeba;
+  --on-primary-fixed: #002106;
+  --on-primary-fixed-variant: #11511f;
+  
+  --secondary: #b3ccb3;
+  --secondary-container: #334b35;
+  --secondary-dim: #98b098;
+  --secondary-fixed: #cee8ce;
+  --secondary-fixed-dim: #b3ccb3;
+  --on-secondary: #1d351f;
+  --on-secondary-container: #cee8ce;
+  --on-secondary-fixed: #08200b;
+  --on-secondary-fixed-variant: #263e29;
+  
+  --tertiary: #c2c8c1;
+  --tertiary-container: #3e443e;
+  --tertiary-dim: #a6aca5;
+  --tertiary-fixed: #dee4dd;
+  --tertiary-fixed-dim: #c2c8c1;
+  --on-tertiary: #2c322b;
+  --on-tertiary-container: #dee4dd;
+  --on-tertiary-fixed: #171d17;
+  --on-tertiary-fixed-variant: #383e38;
+}
+
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 10, 10, 10;
-    --background-end-rgb: 25, 25, 25;
+    --border: var(--outline-variant);
+
+    --font-serif: var(--font-manrope);
+    --font-sans: var(--font-inter);
+    --font-mono: var(--font-dm-mono);
   }
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  color: var(--on-surface);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Safe Area Paddings */
+.bottom-nav {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.sticky-header {
+  padding-top: env(safe-area-inset-top);
+  height: calc(56px + env(safe-area-inset-top));
+}
+
+/* Component Classes */
 @layer components {
   .btn-primary {
-    @apply bg-[#16a34a] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-200;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--on-primary-container) 100%);
+    color: var(--on-primary);
+    touch-action: manipulation;
+    user-select: none;
   }
+  
+  .btn-primary:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
   .input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#16a34a] outline-none transition-all;
+    @apply w-full px-4 py-3 rounded-full transition-all duration-200 outline-none;
+    background-color: var(--surface-container-highest);
+    border: 1px solid rgba(68, 71, 72, 0.1); /* Ghost border */
+    color: var(--on-surface);
+    font-size: 15px;
   }
+
+  .input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(74, 225, 131, 0.1);
+  }
+
   .card {
-    @apply bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6;
+    @apply rounded-xl transition-all duration-200 overflow-hidden;
+    background-color: var(--surface-container);
+    border: none;
   }
+  
+  .ghost-border {
+    border: 1px solid rgba(68, 71, 72, 0.15); /* outline-variant at 15% opacity */
+  }
+}
+
+/* Typography */
+h1, h2, h3, .font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Transitions */
+.page-transition-enter {
+  opacity: 0;
+}
+.page-transition-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* Animations & Interactions */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinkingDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom Scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

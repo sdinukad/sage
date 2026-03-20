@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+
+let genAI: GoogleGenerativeAI;
+let model: GenerativeModel;
+
+function getModel() {
+  if (!model) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+  }
+  return model;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,19 +19,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Note is required' }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const currentModel = getModel();
 
     const prompt = `Categorise the following expense note into one of these categories: Food, Transport, Bills, Entertainment, Health, Shopping, Other.
 Note: "${note}"
 Return only the category name.`;
     
-    const result = await model.generateContent(prompt);
+    const result = await currentModel.generateContent(prompt);
     const category = result.response.text().trim();
 
     return NextResponse.json({ category });
-  } catch (error: any) {
+  } catch (error) {
     console.error('AI Categorise Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

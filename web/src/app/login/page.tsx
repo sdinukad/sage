@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,49 +31,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="card w-full max-w-md space-y-8">
-        <div className="flex flex-col items-center space-y-2">
-          <Logo />
-          <h1 className="text-2xl font-bold pt-4">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Log in to your account to continue</p>
-        </div>
+    <div className="flex flex-col min-h-screen bg-sage-900 max-w-md mx-auto relative overflow-hidden">
+      {/* Top Panel (35%) */}
+      <div className="h-[35vh] flex flex-col items-center justify-center text-center px-6">
+        <h1 className="font-serif text-[44px] text-white leading-none mb-2">Sage</h1>
+        <p className="text-sage-300 text-sm font-sans">Your money, made clear.</p>
+      </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+      {/* Bottom Card (65%) */}
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-t-[28px] mt-[-20px] z-10 p-8 flex flex-col">
+        <h2 className="font-serif text-[26px] text-sage-900 dark:text-white mb-1">Welcome back</h2>
+        <p className="text-ink-2 text-sm mb-8">Log in to your account to continue</p>
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Email</label>
             <input
               type="email"
-              className="input-field"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className={`input-field ${error ? 'border-negative' : ''}`}
               required
             />
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Password</label>
             <input
               type="password"
-              className="input-field"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className={`input-field ${error ? 'border-negative' : ''}`}
               required
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm italic">{error}</p>}
+          {error && <p className="text-negative text-[12px] mt-1 ml-1">{error}</p>}
 
-          <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
+          <button type="submit" className="btn-primary w-full mt-4" disabled={loading}>
             {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
-        <div className="text-center text-sm">
-          <span className="text-gray-500">Don't have an account? </span>
-          <Link href="/register" className="text-[#16a34a] font-medium hover:underline">
-            Register for free
+        <div className="mt-auto pt-8 text-center">
+          <Link href="/register" className="text-sage-500 text-sm font-medium">
+            Don&apos;t have an account? Register
           </Link>
         </div>
       </div>
