@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Category, Expense, ChatResponse, Income, ChatAction } from './models';
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-3-flash-preview';
 
 // Initialize the SDK
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -43,30 +43,24 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
     }
 }
 
-export async function categoriseExpense(note: string): Promise<Category> {
-    const prompt = `Given this expense description, return ONLY one of these categories with no other text: Food, Transport, Bills, Entertainment, Health, Shopping, Other. Description: ${note}`;
-    
-    try {
-        const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-        const result = await model.generateContent(prompt);
-        const category = result.response.text().trim() as Category;
-        
-        const validCategories: Category[] = ["Food", "Transport", "Bills", "Entertainment", "Health", "Shopping", "Other"];
-        return validCategories.includes(category) ? category : "Other";
-    } catch (error) {
-        console.error('Error in categoriseExpense:', error);
-        return "Other";
-    }
-}
+// categoriseExpense removed as it was hardcoded and is now superseded by dynamic categories.
 
 export async function processSageChat(
     message: string,
     expenses: Expense[],
+    expenseCategories: string[] = [],
+    incomeCategories: string[] = [],
     incomes: Income[] = []
 ): Promise<ChatResponse> {
+    const expCats = expenseCategories.length > 0 ? expenseCategories.join(', ') : 'Food, Transport, Bills, Entertainment, Health, Shopping, Other';
+    const incCats = incomeCategories.length > 0 ? incomeCategories.join(', ') : 'Salary, Bonus, Investment, Gift, Other';
+
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
     You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    
+    Expense Categories: ${expCats}
+    Income Categories: ${incCats}
     
     For each request in the message, identify the intent:
     1. QUERY: Ask for information about spending or income.
@@ -74,9 +68,6 @@ export async function processSageChat(
     3. ADD_INCOME: Record a new income.
     4. EDIT_EXPENSE: Modify an existing expense.
     5. EDIT_INCOME: Modify an existing income.
-
-    Income Categories: Salary, Bonus, Investment, Gift, Other
-    Expense Categories: Food, Transport, Bills, Entertainment, Health, Shopping, Other
 
     Return ONLY this JSON structure:
     {
@@ -119,11 +110,19 @@ export async function processSageChat(
 export async function processSageChatStream(
     message: string,
     expenses: Expense[],
+    expenseCategories: string[] = [],
+    incomeCategories: string[] = [],
     incomes: Income[] = []
 ): Promise<ReadableStream> {
+    const expCats = expenseCategories.length > 0 ? expenseCategories.join(', ') : 'Food, Transport, Bills, Entertainment, Health, Shopping, Other';
+    const incCats = incomeCategories.length > 0 ? incomeCategories.join(', ') : 'Salary, Bonus, Investment, Gift, Other';
+
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
     You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    
+    Expense Categories: ${expCats}
+    Income Categories: ${incCats}
     
     For each request in the message, identify the intent:
     1. QUERY: Ask for information about spending or income.
@@ -131,9 +130,6 @@ export async function processSageChatStream(
     3. ADD_INCOME: Record a new income.
     4. EDIT_EXPENSE: Modify an existing expense.
     5. EDIT_INCOME: Modify an existing income.
-
-    Income Categories: Salary, Bonus, Investment, Gift, Other
-    Expense Categories: Food, Transport, Bills, Entertainment, Health, Shopping, Other
 
     Return ONLY this JSON structure:
     {
@@ -159,8 +155,7 @@ export async function processSageChatStream(
     User Message: ${message}`;
 
     const model = genAI.getGenerativeModel({ 
-        model: MODEL_NAME,
-        generationConfig: { responseMimeType: "application/json" }
+        model: MODEL_NAME
     });
     
     const result = await model.generateContentStream(prompt);

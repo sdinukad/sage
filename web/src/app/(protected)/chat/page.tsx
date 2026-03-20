@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChatResponse, ChatAction } from '@/shared/models';
+import { ChatResponse, Expense, ChatAction } from '@/shared/models';
 import { Send, Sparkles } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
 import ConfirmationCard from '@/components/ConfirmationCard';
 import { CATEGORY_COLORS } from '@/components/CategoryBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
+import { syncAddExpense, syncUpdateExpense } from '@/lib/sync';
 
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 });
-
-type ChatMode = 'ask' | 'edit';
 
 interface Message {
   id: string;
@@ -22,18 +21,36 @@ interface Message {
   resolvedActions?: string[];
 }
 
+type ChatMode = 'ask' | 'edit';
+
 export default function ChatPage() {
   const { user } = useAuth();
-  const { expenses, refreshData } = useExpenseData();
+  const { expenses, categories, incomes, refreshData } = useExpenseData();
   const [mode] = useState<ChatMode>('ask');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll when messages change (not on loading toggle)
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       requestAnimationFrame(() => {
@@ -71,11 +88,28 @@ export default function ChatPage() {
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setLoading(true);
 
+    if (!navigator.onLine) {
+      setTimeout(() => {
+        setMessages((prev) => [...prev, {
+          id: Math.random().toString(36).substring(7),
+          type: 'assistant',
+          content: "I'm having trouble connecting to the network. Please connect to Wi-Fi so we can chat!"
+        }]);
+        setLoading(false);
+      }, 500);
+      return;
+    }
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, mode }),
+        body: JSON.stringify({ 
+          message: text, 
+          mode,
+          expenseCategories: categories.filter(c => c.type === 'expense').map(c => c.name),
+          incomeCategories: categories.filter(c => c.type === 'income').map(c => c.name)
+        }),
       });
 
       if (!res.body) throw new Error('No readable stream from API');
@@ -111,7 +145,9 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, {
         id: Math.random().toString(36).substring(7),
         type: 'assistant',
-        content: "I'm having trouble connecting to Sage AI. Please try again later."
+        content: !navigator.onLine 
+          ? "I'm having trouble connecting to the network. Please connect to Wi-Fi so we can chat!"
+          : "I'm having trouble connecting to Sage AI. Please try again later."
       }]);
     } finally {
       setLoading(false);
@@ -129,17 +165,17 @@ export default function ChatPage() {
     let success = false;
     try {
       if (action.type === 'edit_expense' && action.data?.editExpense) {
-        const { error } = await supabase
-          .from('expenses')
-          .update(action.data.editExpense.changes)
-          .eq('id', action.data.editExpense.id);
-        if (!error) success = true;
+        await syncUpdateExpense(action.data.editExpense.id, action.data.editExpense.changes);
+        success = true;
       } else if (action.type === 'add_expense' && action.data?.newExpense) {
-        const { error } = await supabase.from('expenses').insert({
+        await syncAddExpense({
           ...action.data.newExpense,
-          user_id: user.id
-        });
-        if (!error) success = true;
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          date: action.data.newExpense.date || new Date().toISOString().split('T')[0]
+        } as Expense);
+        success = true;
       } else if (action.type === 'add_income' && action.data?.newIncome) {
         const { error } = await supabase.from('incomes').insert({
           ...action.data.newIncome,
@@ -185,24 +221,24 @@ export default function ChatPage() {
         {messages.length === 0 && (
           <div className="flex flex-col gap-6 mt-8 animate-[fadeSlideUp_0.4s_ease-out]">
             <div className="flex flex-col items-center text-center gap-2 mb-4">
-              <div className="w-16 h-16 bg-sage-50 rounded-2xl flex items-center justify-center text-sage-500 mb-2">
+              <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
                 <Sparkles size={32} />
               </div>
-              <h2 className="font-serif text-[24px] text-sage-900 dark:text-white">Hello, I&apos;m Sage</h2>
-              <p className="text-[14px] text-ink-3 max-w-[240px]">Your personal financial assistant. How can I help you today?</p>
+              <h2 className="font-serif text-[24px] text-on-surface">Hello, I&apos;m Sage</h2>
+              <p className="text-[14px] text-on-surface-variant max-w-[240px]">Your personal financial assistant. How can I help you today?</p>
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-[12px] font-medium text-ink-3 uppercase tracking-wider ml-1">Suggested:</p>
+              <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider ml-1">Suggested:</p>
               <div className="flex flex-col gap-2">
                 {examplePrompts.map((prompt) => (
                   <button 
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    className="px-5 py-3.5 bg-white dark:bg-gray-900 border border-border text-ink rounded-2xl text-[14px] font-medium text-left active:scale-[0.98] transition-all hover:border-sage-300 group flex items-center justify-between"
+                    className="px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-2xl text-[14px] font-medium text-left active:scale-[0.98] transition-all hover:border-primary group flex items-center justify-between"
                   >
                     {prompt}
-                    <span className="text-sage-300 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                    <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                   </button>
                 ))}
               </div>
@@ -215,25 +251,25 @@ export default function ChatPage() {
             <ChatBubble role={msg.type} content={msg.content} />
             
             {/* Matched Expenses */}
-            {msg.type === 'assistant' && msg.actions?.some(a => a.type === 'query' && a.data?.matchedIds) && (
+            {msg.type === 'assistant' && msg.actions?.some((a: ChatAction) => a.type === 'query' && a.data?.matchedIds) && (
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x ml-2 my-2 transition-all">
-                {expenses.filter(e => msg.actions?.find(a => a.type === 'query')?.data?.matchedIds?.includes(e.id)).map(exp => (
+                {expenses.filter(e => msg.actions?.find((a: ChatAction) => a.type === 'query')?.data?.matchedIds?.includes(e.id)).map(exp => (
                   <div key={exp.id} className="card min-w-[160px] p-4 flex flex-col gap-2 snap-start border-sage-100 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[exp.category] || CATEGORY_COLORS['Other'] }} />
-                      <span className="text-[10px] text-ink-3 font-medium uppercase">{exp.category}</span>
+                      <span className="text-[10px] text-on-surface-variant font-medium uppercase">{exp.category}</span>
                     </div>
-                    <span className="font-mono text-[20px] text-ink font-semibold">
+                    <span className="font-mono text-[20px] text-on-surface font-semibold">
                       {currencyFormatter.format(Number(exp.amount))}
                     </span>
-                    <span className="text-[12px] text-ink-3 truncate">{exp.note || 'No description'}</span>
+                    <span className="text-[12px] text-on-surface-variant truncate">{exp.note || 'No description'}</span>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Confirmation Actions */}
-            {msg.type === 'assistant' && msg.actions?.map((action, idx) => {
+            {msg.type === 'assistant' && msg.actions?.map((action: ChatAction, idx: number) => {
               const isResolved = msg.resolvedActions?.includes(idx.toString());
               if (['edit_expense', 'add_expense', 'add_income', 'edit_income'].includes(action.type) && !isResolved) {
                 return (
@@ -258,13 +294,14 @@ export default function ChatPage() {
       </div>
 
       {/* Fixed Input Area at bottom */}
-      <div className="flex-shrink-0 bg-white/90 dark:bg-black/90 backdrop-blur-md border-t border-border p-3">
-        <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-border rounded-[24px]">
+      <div className="flex-shrink-0 bg-surface/90 backdrop-blur-md border-t border-border p-3">
+        <div className="flex items-center gap-3 px-3 py-2 bg-surface-container border border-border rounded-[24px]">
           <textarea
             ref={textareaRef}
             rows={1}
-            placeholder="Ask anything..."
+            placeholder={isOffline ? "You are offline. Reconnect to chat..." : "Ask anything..."}
             value={input}
+            disabled={isOffline || loading}
             onChange={(e) => {
               setInput(e.target.value);
               e.target.style.height = 'auto';
@@ -276,12 +313,12 @@ export default function ChatPage() {
                 handleSend();
               }
             }}
-            className="flex-1 bg-transparent border-none py-1.5 text-[15px] text-ink outline-none resize-none no-scrollbar font-sans"
+            className="flex-1 bg-transparent border-none py-1.5 text-[15px] text-on-surface outline-none resize-none no-scrollbar font-sans"
           />
           <button 
             onClick={() => handleSend()}
-            disabled={!input.trim() || loading}
-            className="w-10 h-10 rounded-full bg-sage-500 text-white flex items-center justify-center flex-shrink-0 active:scale-95 disabled:opacity-50 transition-all shadow-md"
+            disabled={!input.trim() || loading || isOffline}
+            className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0 active:scale-95 disabled:opacity-50 transition-all shadow-md"
           >
             <Send size={18} />
           </button>

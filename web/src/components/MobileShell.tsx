@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { House, Clock, Sparkles, User, Plus, Bell, Sun, Moon } from 'lucide-react';
+import { House, Clock, Sparkles, User, Plus, Bell, Sun, Moon, WifiOff, Tag } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
@@ -40,6 +40,22 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasRenderedModal, setHasRenderedModal] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   if (isModalOpen && !hasRenderedModal) {
     setHasRenderedModal(true);
@@ -49,6 +65,7 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
     { label: 'Chat', icon: Sparkles, href: '/chat' },
     { label: 'Dashboard', icon: House, href: '/dashboard' },
     { label: 'History', icon: Clock, href: '/history' },
+    { label: 'Tags', icon: Tag, href: '/categories' },
     { label: 'Profile', icon: User, href: '/profile' },
   ];
 
@@ -69,6 +86,14 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
           </div>
         </div>
       </header>
+
+      {/* Global Offline Banner */}
+      {isOffline && (
+        <div className="bg-error text-on-error px-4 py-1.5 text-[13px] font-medium text-center flex items-center justify-center gap-2 z-50">
+          <WifiOff size={14} />
+          You are offline. Showing local data.
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 pb-24">

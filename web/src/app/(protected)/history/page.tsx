@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { syncDeleteExpense } from '@/lib/sync';
 import { Expense } from '@/shared/models';
 import ExpenseRow from '@/components/ExpenseRow';
 import FilterPills from '@/components/FilterPills';
@@ -26,14 +26,8 @@ export default function HistoryPage() {
   }, [allExpenses, activeFilter]);
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('expenses').delete().eq('id', id);
-    if (!error) {
-      setSwipedId(null);
-      // Refresh the shared context data
-      refreshData();
-    } else {
-      console.error(error.message);
-    }
+    await syncDeleteExpense(id);
+    setSwipedId(null);
   };
 
   // Grouping logic
@@ -57,9 +51,9 @@ export default function HistoryPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md px-4 h-[64px] flex items-center justify-between border-b border-border">
-        <h1 className="font-serif text-[24px] font-semibold text-sage-900 dark:text-white">History</h1>
-        <div className="text-[12px] text-ink-3 font-medium uppercase tracking-wider">
+      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 h-[64px] flex items-center justify-between border-b border-border">
+        <h1 className="font-serif text-[24px] font-semibold text-on-surface">History</h1>
+        <div className="text-[12px] text-on-surface-variant font-medium uppercase tracking-wider">
           {filteredExpenses.length} Total
         </div>
       </header>
@@ -74,10 +68,10 @@ export default function HistoryPage() {
             {[1, 2].map(i => (
               <div key={i} className="flex flex-col gap-3">
                 <div className="flex justify-between px-1">
-                  <div className="h-6 w-32 bg-gray-100 dark:bg-gray-800 rounded-md" />
-                  <div className="h-4 w-20 bg-gray-100 dark:bg-gray-800 rounded-md" />
+                  <div className="h-6 w-32 bg-surface-container-high rounded-md" />
+                  <div className="h-4 w-20 bg-surface-container rounded-md" />
                 </div>
-                <div className="card h-[160px] bg-gray-50 dark:bg-gray-900 border-border" />
+                <div className="card h-[160px] bg-surface-container border-border" />
               </div>
             ))}
           </div>
@@ -86,8 +80,8 @@ export default function HistoryPage() {
             {groupedExpenses.map(([monthYear, { total, items }]) => (
               <div key={monthYear} className="flex flex-col gap-3">
                 <div className="flex items-center justify-between px-1">
-                  <h2 className="font-serif text-[18px] text-sage-900 dark:text-white">{monthYear}</h2>
-                  <span className="font-mono text-[14px] text-ink-3 font-medium">
+                  <h2 className="font-serif text-[18px] text-on-surface">{monthYear}</h2>
+                  <span className="font-mono text-[14px] text-on-surface-variant font-medium">
                     {currencyFormatter.format(total)}
                   </span>
                 </div>
@@ -104,7 +98,7 @@ export default function HistoryPage() {
                       </div>
 
                       <div 
-                        className={`transition-transform duration-200 bg-white dark:bg-gray-900 ${swipedId === expense.id ? '-translate-x-[80px]' : 'translate-x-0'}`}
+                        className={`transition-transform duration-200 bg-surface ${swipedId === expense.id ? '-translate-x-[80px]' : 'translate-x-0'}`}
                         onClick={() => setSwipedId(swipedId === expense.id ? null : expense.id)}
                       >
                         <ExpenseRow 
@@ -123,10 +117,10 @@ export default function HistoryPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
-            <div className="w-16 h-16 bg-sage-50 rounded-2xl flex items-center justify-center text-sage-300 mb-2">
+            <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
               <Trash2 size={32} />
             </div>
-            <p className="text-ink-3 text-[14px] font-medium">No expenses found</p>
+            <p className="text-on-surface-variant text-[14px] font-medium">No expenses found</p>
           </div>
         )}
       </div>

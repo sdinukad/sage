@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Expense, Income } from '@/shared/models';
 import { useAuth } from './AuthContext';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, LocalCategory } from '@/lib/localdb';
+import { pullRemoteData, syncAddCategory, syncDeleteCategory } from '@/lib/sync';
 
 interface DashboardStats {
   totalThisMonth: number;
@@ -17,10 +19,13 @@ interface ExpenseDataContextType {
   expenses: Expense[];
   recentExpenses: Expense[];
   incomes: Income[];
+  categories: LocalCategory[];
   stats: DashboardStats;
   loading: boolean;
   hasFetched: boolean;
   refreshData: () => Promise<void>;
+  addCategory: (name: string, type: 'expense' | 'income', color?: string) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 const defaultStats: DashboardStats = {
@@ -35,112 +40,146 @@ const ExpenseDataContext = createContext<ExpenseDataContextType>({
   expenses: [],
   recentExpenses: [],
   incomes: [],
+  categories: [],
   stats: defaultStats,
   loading: true,
   hasFetched: false,
   refreshData: async () => {},
+  addCategory: async () => {},
+  deleteCategory: async () => {},
 });
 
 export const ExpenseDataProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const [stats, setStats] = useState<DashboardStats>(defaultStats);
+  
+  // Real-time Dexie subscriptions: gives 0ms latency after first ever load / offline mode
+  const localExpenses = useLiveQuery(() => db.expenses.orderBy('date').reverse().toArray());
+  const localIncomes = useLiveQuery(() => db.incomes.orderBy('date').reverse().toArray());
+  const localCategories = useLiveQuery(() => db.categories.toArray());
+
+  const expenses = useMemo(() => {
+    const all = (localExpenses || []) as Expense[];
+    return all.filter(e => (e as any).sync_status !== 'pending_delete');
+  }, [localExpenses]);
+  const incomes = useMemo(() => (localIncomes || []) as Income[], [localIncomes]);
+  const categories = useMemo(() => {
+    const all = (localCategories || []) as LocalCategory[];
+    return all.filter(c => c.sync_status !== 'pending_delete');
+  }, [localCategories]);
+  const recentExpenses = useMemo(() => expenses.slice(0, 10), [expenses]);
+  
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
   const hasFetchedRef = useRef(false);
 
-  const fetchAllData = useCallback(async () => {
+  const fetchSupabaseBackground = useCallback(async () => {
     if (!user) return;
 
-    // Only show loading spinner on the very first fetch
     if (!hasFetchedRef.current) {
       setLoading(true);
     }
 
     try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-      const [allExpRes, monthStatsRes, incRes] = await Promise.all([
-        supabase.from('expenses').select('*').order('date', { ascending: false }),
-        supabase.from('expenses').select('category, amount, date').gte('date', startOfLastMonth.toISOString().split('T')[0]),
-        supabase.from('incomes').select('*').order('date', { ascending: false }),
-      ]);
-
-      if (allExpRes.data) {
-        setExpenses(allExpRes.data);
-        setRecentExpenses(allExpRes.data.slice(0, 10));
+      await pullRemoteData();
+      
+      // Seed default categories if user has NONE (neither in Supabase nor Local)
+      const currentCats = await db.categories.count();
+      if (currentCats === 0) {
+        const defaults: Omit<LocalCategory, 'sync_status'>[] = [
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Food', type: 'expense', color: '#ff9f43' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Transport', type: 'expense', color: '#54a0ff' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Bills', type: 'expense', color: '#ee5253' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Salary', type: 'income', color: '#4a7c59' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Other', type: 'expense', color: '#8395a7' },
+        ];
+        for (const cat of defaults) {
+          await syncAddCategory(cat);
+        }
       }
-      if (incRes.data) setIncomes(incRes.data);
 
-      if (monthStatsRes.data) {
-        const thisMonthStr = startOfMonth.toISOString().split('T')[0];
-        
-        const thisMonthData = monthStatsRes.data.filter(e => e.date >= thisMonthStr);
-        const lastMonthData = monthStatsRes.data.filter(e => e.date < thisMonthStr);
-
-        const totals: Record<string, number> = {};
-        let monthTotal = 0;
-        thisMonthData.forEach((exp) => {
-          const amt = Number(exp.amount);
-          totals[exp.category] = (totals[exp.category] || 0) + amt;
-          monthTotal += amt;
-        });
-
-        const lastMonthTotal = lastMonthData.reduce((acc, exp) => acc + Number(exp.amount), 0);
-        const vsLastMonth = lastMonthTotal > 0
-          ? `${Math.round(((monthTotal - lastMonthTotal) / lastMonthTotal) * 100)}%`
-          : '+100%';
-
-        const sortedCategories = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-        const topCategory = sortedCategories[0]?.[0] || 'None';
-
-        setStats({
-          totalThisMonth: monthTotal,
-          vsLastMonth,
-          expenseCount: thisMonthData.length,
-          topCategory,
-          breakdown: [
-            { category: 'All', amount: monthTotal },
-            ...sortedCategories.map(([category, amount]) => ({ category, amount })),
-          ],
-        });
-      }
     } catch (err) {
-      console.error('ExpenseDataContext Fetch Error:', err);
+      console.error('Local Sync Error:', err);
     } finally {
-      setLoading(false);
+      if (hasFetchedRef.current === false) setLoading(false);
       hasFetchedRef.current = true;
       setHasFetched(true);
     }
-  }, [user]); // Only depends on user — stable callback
+  }, [user]);
 
-  // Fetch when user becomes available
+  // Automatically fetch remote changes when app mounts & user logs in
   useEffect(() => {
     if (user) {
-      fetchAllData();
+      fetchSupabaseBackground();
     }
-  }, [user, fetchAllData]);
+  }, [user, fetchSupabaseBackground]);
 
-  // Listen for expense-added events (from AddExpenseModal / chat)
-  useEffect(() => {
-    const handleExpenseAdded = () => fetchAllData();
-    window.addEventListener('expense-added', handleExpenseAdded);
-    return () => window.removeEventListener('expense-added', handleExpenseAdded);
-  }, [fetchAllData]);
+  const addCategory = async (name: string, type: 'expense' | 'income', color?: string) => {
+    if (!user) return;
+    await syncAddCategory({
+      id: crypto.randomUUID(),
+      user_id: user.id,
+      name,
+      type,
+      color: color || '#8395a7'
+    });
+  };
+
+  const deleteCategory = async (id: string) => {
+    await syncDeleteCategory(id);
+  };
+
+  // Compute stats synchronously from local DB updates
+  const stats = useMemo(() => {
+    if (expenses.length === 0) return defaultStats;
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthStr = startOfMonth.toISOString().split('T')[0];
+        
+    const thisMonthData = expenses.filter(e => e.date >= thisMonthStr);
+    const lastMonthData = expenses.filter(e => e.date < thisMonthStr);
+
+    const totals: Record<string, number> = {};
+    let monthTotal = 0;
+    thisMonthData.forEach((exp) => {
+      const amt = Number(exp.amount);
+      totals[exp.category] = (totals[exp.category] || 0) + amt;
+      monthTotal += amt;
+    });
+
+    const lastMonthTotal = lastMonthData.reduce((acc, exp) => acc + Number(exp.amount), 0);
+    const vsLastMonth = lastMonthTotal > 0
+      ? `${Math.round(((monthTotal - lastMonthTotal) / lastMonthTotal) * 100)}%`
+      : '+100%';
+
+    const sortedCategories = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    const topCategory = sortedCategories[0]?.[0] || 'None';
+
+    return {
+      totalThisMonth: monthTotal,
+      vsLastMonth,
+      expenseCount: thisMonthData.length,
+      topCategory,
+      breakdown: [
+        { category: 'All', amount: monthTotal },
+        ...sortedCategories.map(([category, amount]) => ({ category, amount })),
+      ],
+    };
+  }, [expenses]);
 
   const value = useMemo(() => ({
     expenses,
     recentExpenses,
     incomes,
+    categories,
     stats,
-    loading,
-    hasFetched,
-    refreshData: fetchAllData,
-  }), [expenses, recentExpenses, incomes, stats, loading, hasFetched, fetchAllData]);
+    // If we have offline cache, don't block UI with loading
+    loading: loading && expenses.length === 0, 
+    hasFetched: hasFetched || expenses.length > 0,
+    refreshData: fetchSupabaseBackground,
+    addCategory,
+    deleteCategory
+  }), [expenses, recentExpenses, incomes, categories, stats, loading, hasFetched, fetchSupabaseBackground]);
 
   return (
     <ExpenseDataContext.Provider value={value}>

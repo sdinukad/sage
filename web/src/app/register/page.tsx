@@ -38,7 +38,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-sage-900 max-w-md mx-auto relative overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-surface-container max-w-md mx-auto relative overflow-hidden">
       {/* Top Panel (35%) */}
       <div className="h-[35vh] flex flex-col items-center justify-center text-center px-6">
         <h1 className="font-serif text-[44px] text-white leading-none mb-2">Sage</h1>
@@ -46,13 +46,13 @@ export default function RegisterPage() {
       </div>
 
       {/* Bottom Card (65%) */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-t-[28px] mt-[-20px] z-10 p-8 flex flex-col">
-        <h2 className="font-serif text-[26px] text-sage-900 dark:text-white mb-1">Create account</h2>
+      <div className="flex-1 bg-surface rounded-t-[28px] mt-[-20px] z-10 p-8 flex flex-col">
+        <h2 className="font-serif text-[26px] text-on-surface mb-1">Create account</h2>
         <p className="text-ink-2 text-sm mb-8">Start spending smarter with Sage</p>
 
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Email</label>
+            <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Email</label>
             <input
               type="email"
               placeholder="you@example.com"
@@ -64,7 +64,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Password</label>
+            <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Password</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -76,7 +76,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-ink-3 uppercase ml-1">Confirm Password</label>
+            <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Confirm Password</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -95,7 +95,7 @@ export default function RegisterPage() {
         </form>
 
         <div className="mt-auto pt-8 text-center">
-          <Link href="/login" className="text-sage-500 text-sm font-medium">
+          <Link href="/login" className="text-primary text-sm font-medium">
             Already have an account? Log in
           </Link>
         </div>

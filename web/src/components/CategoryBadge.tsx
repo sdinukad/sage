@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useExpenseData } from '@/context/ExpenseDataContext';
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Food': '#ff9f43',
@@ -18,7 +19,19 @@ interface CategoryBadgeProps {
 }
 
 const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, dotOnly = false, className = "" }) => {
-  const color = CATEGORY_COLORS[category] || CATEGORY_COLORS['Other'];
+  const { categories } = useExpenseData();
+  
+  const color = useMemo(() => {
+    if (category === 'All') return CATEGORY_COLORS['All'];
+    const custom = categories.find(c => c.name === category);
+    if (custom?.color) return custom.color;
+    return CATEGORY_COLORS['Other']; // Gray fallback for dangling categories
+  }, [category, categories]);
+
+  const isDangling = useMemo(() => {
+    if (category === 'All') return false;
+    return !categories.find(c => c.name === category);
+  }, [category, categories]);
 
   if (dotOnly) {
     return (
@@ -30,7 +43,7 @@ const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, dotOnly = false
   }
 
   return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${className}`}
+    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${isDangling ? 'border-dashed border-on-surface-variant/30' : 'border-transparent'} ${className}`}
          style={{ backgroundColor: `${color}1A`, color: color }}>
       <div className="rounded-full" style={{ backgroundColor: color, width: '6px', height: '6px' }} />
       {category}

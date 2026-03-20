@@ -16,13 +16,13 @@ const ConfirmationCard: React.FC<ConfirmationCardProps> = ({ text, onConfirm, on
       <div className="flex gap-2">
         <button 
           onClick={onCancel}
-          className="flex-1 px-4 py-2 bg-white dark:bg-gray-900 border border-border rounded-[10px] text-sm font-medium text-ink transition-all active:scale-95"
+          className="flex-1 px-4 py-2 bg-surface border border-outline-variant rounded-[10px] text-sm font-medium text-on-surface transition-all active:scale-95"
         >
           Cancel
         </button>
         <button 
           onClick={onConfirm}
-          className="flex-1 px-4 py-2 bg-sage-500 text-white rounded-[10px] text-sm font-medium transition-all active:scale-95"
+          className="flex-1 px-4 py-2 bg-primary text-on-primary rounded-[10px] text-sm font-medium transition-all active:scale-95"
         >
           Confirm
         </button>

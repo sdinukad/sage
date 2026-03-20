@@ -4,9 +4,12 @@ import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { message, expenseCategories, incomeCategories } = await req.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -60,13 +63,20 @@ export async function POST(req: Request) {
       hasGeminiKey: !!apiKey
     });
 
-    const stream = await processSageChatStream(message, (expenses as Expense[]) || [], (incomes as Income[]) || []);
+    const stream = await processSageChatStream(
+      message, 
+      (expenses as Expense[]) || [], 
+      expenseCategories || [],
+      incomeCategories || [],
+      (incomes as Income[]) || []
+    );
 
     console.log('Chat API Streaming started');
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
       },
     });
 

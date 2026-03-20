@@ -1,33 +1,47 @@
-import { Category, Expense } from './models';
+import { Category, Expense, ChatAction, ChatResponse } from './models';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = 'gemini-2.0-flash';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const MODEL = 'gemini-3-flash-preview';
+
+function getApiUrl() {
+    const key = process.env.GEMINI_API_KEY;
+    return `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+}
 
 async function callGemini(prompt: string): Promise<any> {
-    const response = await fetch(API_URL, {
+    const url = getApiUrl();
+    const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                response_mime_type: "application/json",
-            }
+            contents: [{ parts: [{ text: prompt }] }]
         }),
     });
 
     if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.statusText}`);
+        const text = await response.text();
+        throw new Error(`Gemini API error: ${response.status} ${text}`);
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    // Clean up markdown code blocks if present
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
     try {
         return JSON.parse(text);
     } catch (e) {
-        return text;
+        // Fallback: search for JSON in the text
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch (innerE) {}
+        }
+        console.error("Gemini JSON Parse Error:", e, "Raw Text:", text);
+        return { answer: text, actions: [] };
     }
 }
 
@@ -35,8 +49,8 @@ export async function categoriseExpense(note: string): Promise<Category> {
     const prompt = `Given this expense description, return ONLY one of these categories with no other text: Food, Transport, Bills, Entertainment, Health, Shopping, Other. Description: ${note}`;
     
     try {
-        // Adjusting call to return plain text for single category
-        const response = await fetch(API_URL, {
+        const url = getApiUrl();
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -55,56 +69,53 @@ export async function categoriseExpense(note: string): Promise<Category> {
     }
 }
 
-export async function parseNaturalQuery(
-    query: string, 
+export async function processSageChat(
+    message: string,
     expenses: Expense[]
-): Promise<{ answer: string; matchedIds: string[] }> {
-    const prompt = `You are an expense assistant. Answer the user's question using only the provided expense data. Return ONLY this JSON:
-    { "answer": string, "matchedIds": string[] }
-    Expenses: ${JSON.stringify(expenses)}
-    Question: ${query}`;
+): Promise<ChatResponse> {
+    const prompt = `You are Sage, a helpful personal accountant. 
+    Analyze the user's message and current expenses. 
+    A user message might contain MULTIPLE requests (e.g., "I spent 10 on lunch and 15 on coffee").
+    
+    For each request in the message, identify the intent:
+    1. QUERY: Ask for information about their spending.
+    2. ADD: Record a new expense.
+    3. EDIT: Modify an existing expense.
 
-    try {
-        const result = await callGemini(prompt);
-        return {
-            answer: result.answer || "Sorry, I couldn't understand that.",
-            matchedIds: result.matchedIds || []
-        };
-    } catch (error) {
-        return { answer: "Sorry, I couldn't understand that.", matchedIds: [] };
-    }
-}
-
-export async function parseEditIntent(
-    message: string, 
-    expenses: Expense[]
-): Promise<{
-    expenseId: string | null,
-    changes: Partial<Pick<Expense, 'amount'|'category'|'date'|'note'>> | null,
-    confirmationText: string
-}> {
-    const prompt = `You are an expense editor. Identify which expense the user wants to edit and what changes to make. Return ONLY this JSON:
+    Return ONLY JSON:
     {
-      "expenseId": string or null,
-      "changes": { "amount"?: number, "category"?: string, "date"?: ISO string, "note"?: string } or null,
-      "confirmationText": string (e.g. 'Change the Uber on March 5 from 850 to 1200?')
+        "answer": "Greeting and summary of what you found",
+        "actions": [
+            {
+                "type": "query" | "add" | "edit" | "unknown",
+                "data": {
+                    "matchedIds": ["uuid", ...],
+                    "newExpense": { "amount": number, "category": "Food"|"Transport"|"Bills"|"Entertainment"|"Health"|"Shopping"|"Other", "note": "string", "date": "ISO string" },
+                    "editExpense": { "id": "uuid", "changes": { ... } }
+                },
+                "confirmationText": "Confirmation question for this action"
+            }
+        ]
     }
-    If unclear, set expenseId and changes to null, ask for clarification in confirmationText.
+
+    If no expenses match a query, return matchedIds: [].
+    If recording multiple expenses, add multiple items to the "actions" array.
+
+    Current Date: ${new Date().toISOString()}
     Expenses: ${JSON.stringify(expenses)}
-    Message: ${message}`;
+    User Message: ${message}`;
 
     try {
         const result = await callGemini(prompt);
         return {
-            expenseId: result.expenseId || null,
-            changes: result.changes || null,
-            confirmationText: result.confirmationText || "I'm not sure what you want to change."
+            answer: result.answer || "Processed your request.",
+            actions: result.actions || []
         };
     } catch (error) {
+        console.error("Sage Chat Error:", error);
         return {
-            expenseId: null,
-            changes: null,
-            confirmationText: "Sorry, I couldn't parse your edit request."
+            answer: "Sorry, I'm having trouble processing that right now.",
+            actions: []
         };
     }
 }
