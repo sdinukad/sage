@@ -5,6 +5,7 @@ import { useExpenseData } from '@/context/ExpenseDataContext';
 import { Trash2, Plus, ArrowLeft, Tag } from 'lucide-react';
 import Link from 'next/link';
 
+export default function CategoriesPage() {
   const PRESET_COLORS = ['#ff9f43', '#54a0ff', '#ee5253', '#5f27cd', '#1dd1a1', '#ff6b6b', '#10ac84', '#2e86de', '#f368e0', '#22a6b3', '#be2edd', '#4834d4'];
   const { categories, addCategory, deleteCategory } = useExpenseData();
   const [newName, setNewName] = useState('');
