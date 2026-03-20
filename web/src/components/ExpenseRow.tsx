@@ -8,11 +8,12 @@ interface ExpenseRowProps {
   category: string;
   note: string;
   date: string;
+  type?: 'expense' | 'income';
   onDelete?: (id: string) => void;
   showFullDate?: boolean;
 }
 
-const ExpenseRow: React.FC<ExpenseRowProps> = ({ amount, category, note, date, showFullDate }) => {
+const ExpenseRow: React.FC<ExpenseRowProps> = ({ amount, category, note, date, type = 'expense', showFullDate }) => {
   const displayDate = () => {
     const d = new Date(date);
     if (showFullDate) return format(d, 'MMM d, yyyy');
@@ -34,8 +35,9 @@ const ExpenseRow: React.FC<ExpenseRowProps> = ({ amount, category, note, date, s
           </span>
         </div>
       </div>
-      <div className="font-serif text-[18px] text-on-surface font-semibold">
-        {new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount)}
+      <div className={`font-serif text-[18px] font-semibold ${type === 'income' ? 'text-green-600' : 'text-on-surface'}`}>
+        {type === 'income' ? '+' : ''}
+        {new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(amount)}
       </div>
     </div>
   );

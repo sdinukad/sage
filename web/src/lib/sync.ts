@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { db, LocalCategory } from './localdb';
-import { Expense } from '@/shared/models';
+import { Expense, Income } from '@/shared/models';
 
 /**
  * Optimistically adds an expense to the local IndexedDB.
@@ -53,6 +53,42 @@ export async function syncDeleteExpense(id: string) {
     if (!error) {
       // 3. Fully remove from local DB only after remote confirmation
       await db.expenses.delete(id);
+    }
+  } catch (e) {
+    console.log("Device offline, deletion queued locally.", e);
+  }
+}
+
+export async function syncAddIncome(income: Income) {
+  await db.incomes.put({ ...income, sync_status: 'pending_insert' });
+  try {
+    const { error } = await supabase.from('incomes').insert(income);
+    if (!error) {
+      await db.incomes.update(income.id, { sync_status: 'synced' });
+    }
+  } catch (e) {
+    console.log("Device offline, income queued locally.", e);
+  }
+}
+
+export async function syncUpdateIncome(id: string, changes: Partial<Income>) {
+  await db.incomes.update(id, { ...changes, sync_status: 'pending_update' });
+  try {
+    const { error } = await supabase.from('incomes').update(changes).eq('id', id);
+    if (!error) {
+      await db.incomes.update(id, { sync_status: 'synced' });
+    }
+  } catch (e) {
+    console.log("Device offline, update queued locally.", e);
+  }
+}
+
+export async function syncDeleteIncome(id: string) {
+  await db.incomes.update(id, { sync_status: 'pending_delete' });
+  try {
+    const { error } = await supabase.from('incomes').delete().eq('id', id);
+    if (!error) {
+      await db.incomes.delete(id);
     }
   } catch (e) {
     console.log("Device offline, deletion queued locally.", e);

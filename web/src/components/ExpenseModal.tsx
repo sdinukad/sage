@@ -4,30 +4,32 @@ import { useState, useEffect, useRef } from 'react';
 import BottomSheet from './BottomSheet';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
-import { syncAddExpense, syncUpdateExpense } from '@/lib/sync';
-import { Expense } from '@/shared/models';
+import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome } from '@/lib/sync';
+import { Expense, Income } from '@/shared/models';
 import { useMemo } from 'react';
 
 interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  initialData?: Expense | null;
+  initialData?: (Expense | Income) & { type?: 'expense' | 'income' } | null;
 }
 
 export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }: ExpenseModalProps) {
   const { user } = useAuth();
   const { categories } = useExpenseData();
 
-  const expenseCategories = useMemo(() => 
-    categories.filter(c => c.type === 'expense').map(c => c.name),
-    [categories]
-  );
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
+  const [type, setType] = useState<'expense' | 'income'>('expense');
   const [category, setCategory] = useState('Other');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+
+  const activeCategories = useMemo(() => 
+    categories.filter(c => c.type === type).map(c => c.name),
+    [categories, type]
+  );
 
   const amountRef = useRef<HTMLInputElement>(null);
 
@@ -38,10 +40,12 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
         setNote(initialData.note || '');
         setCategory(initialData.category);
         setDate(initialData.date.split('T')[0]);
+        setType(initialData.type || 'expense');
       } else {
         setAmount('');
         setNote('');
         setCategory('Other');
+        setType('expense');
         setDate(new Date().toISOString().split('T')[0]);
         setTimeout(() => amountRef.current?.focus(), 400);
       }
@@ -56,14 +60,19 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
     setLoading(true);
 
     if (initialData) {
-      await syncUpdateExpense(initialData.id, {
+      const updateData = {
         amount: parseFloat(amount),
         note,
         category,
         date
-      });
+      };
+      if (type === 'income') {
+        await syncUpdateIncome(initialData.id, updateData);
+      } else {
+        await syncUpdateExpense(initialData.id, updateData);
+      }
     } else {
-      const newExpense = {
+      const common = {
         id: crypto.randomUUID(),
         user_id: user.id,
         amount: parseFloat(amount),
@@ -71,8 +80,12 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
         category,
         date,
         created_at: new Date().toISOString()
-      } as Expense;
-      await syncAddExpense(newExpense);
+      };
+      if (type === 'income') {
+        await syncAddIncome(common as Income);
+      } else {
+        await syncAddExpense(common as Expense);
+      }
     }
 
     onClose();
@@ -81,8 +94,28 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title={initialData ? "Edit expense" : "New expense"}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={initialData ? (type === 'income' ? "Edit income" : "Edit expense") : (type === 'income' ? "New income" : "New expense")}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Type Toggle - only show if creating new to avoid confusion on edit */}
+        {!initialData && (
+          <div className="flex gap-2 p-1 bg-surface-container rounded-xl">
+            <button 
+              type="button"
+              onClick={() => { setType('expense'); setCategory('Other'); }}
+              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'expense' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+            >
+              Expense
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setType('income'); setCategory('Salary'); }}
+              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'income' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+            >
+              Income
+            </button>
+          </div>
+        )}
+
         {/* Amount Input */}
         <div className="relative flex flex-col items-center pt-4">
           <div className="flex items-baseline gap-2">
@@ -122,7 +155,7 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
                 onChange={(e) => setCategory(e.target.value)}
                 className="input-field appearance-none"
               >
-                {expenseCategories.map((cat) => (
+                {activeCategories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -145,7 +178,7 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
           disabled={loading || !amount}
           className="btn-primary w-full mt-2"
         >
-          {loading ? 'Saving...' : 'Save expense'}
+          {loading ? 'Saving...' : (initialData ? 'Update' : `Save ${type}`)}
         </button>
       </form>
     </BottomSheet>

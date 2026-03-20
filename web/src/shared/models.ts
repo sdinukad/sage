@@ -1,4 +1,4 @@
-export type Category = "Food" | "Transport" | "Bills" | "Entertainment" | "Health" | "Shopping" | "Other";
+export type Category = string;
 
 export interface Expense {
   id: string;
@@ -14,7 +14,7 @@ export interface User {
   email: string;
 }
 
-export type IncomeCategory = 'Salary' | 'Bonus' | 'Investment' | 'Gift' | 'Other';
+export type IncomeCategory = string;
 
 export interface Income {
   id: string;

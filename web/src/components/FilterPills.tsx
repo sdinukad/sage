@@ -9,18 +9,20 @@ interface FilterPillsProps {
 }
 
 const FilterPills: React.FC<FilterPillsProps> = ({ activeFilter, onFilterChange }) => {
-  const { categories, expenses } = useExpenseData();
+  const { categories, expenses, incomes } = useExpenseData();
   
   const filterList = useMemo(() => {
-    // Standard expense categories from the settings
-    const activeCats = categories.filter(c => c.type === 'expense').map(c => c.name);
+    const activeCats = categories.map(c => c.name);
     
-    // Find any categories used in actual expenses that AREN'T in the active list
-    const usedCats = Array.from(new Set(expenses.map(e => e.category)));
+    const usedCats = Array.from(new Set([
+      ...expenses.map(e => e.category),
+      ...incomes.map(i => i.category)
+    ]));
+    
     const danglingCats = usedCats.filter(cat => !activeCats.includes(String(cat)) && String(cat) !== 'All');
     
     return ['All', ...activeCats, ...danglingCats];
-  }, [categories, expenses]);
+  }, [categories, expenses, incomes]);
   return (
     <div className="sticky top-[calc(56px+env(safe-area-inset-top))] z-30 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-border">
       <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar snap-x">

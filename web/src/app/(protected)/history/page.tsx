@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { syncDeleteExpense } from '@/lib/sync';
-import { Expense } from '@/shared/models';
+import { syncDeleteExpense, syncDeleteIncome } from '@/lib/sync';
+import { Expense, Income } from '@/shared/models';
 import ExpenseRow from '@/components/ExpenseRow';
 import FilterPills from '@/components/FilterPills';
 import { format, parseISO } from 'date-fns';
@@ -15,42 +15,57 @@ const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), { ssr: f
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
 
 export default function HistoryPage() {
-  const { expenses: allExpenses, loading, hasFetched, refreshData } = useExpenseData();
+  const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched, refreshData } = useExpenseData();
   const [activeFilter, setActiveFilter] = useState('All');
   const [swipedId, setSwipedId] = useState<string | null>(null);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingItem, setEditingItem] = useState<(Expense | Income) & { type?: 'expense' | 'income' } | null>(null);
+
+  // Merge and tag types
+  const allData = useMemo(() => {
+    const exps = allExpenses.map(e => ({ ...e, type: 'expense' as const }));
+    const incs = allIncomes.map(i => ({ ...i, type: 'income' as const }));
+    return [...exps, ...incs];
+  }, [allExpenses, allIncomes]);
 
   // Only show skeletons on the very first load before any data arrives
   const showSkeleton = loading && !hasFetched;
 
-  // Filter expenses locally
-  const filteredExpenses = useMemo(() => {
-    if (activeFilter === 'All') return allExpenses;
-    return allExpenses.filter(e => e.category === activeFilter);
-  }, [allExpenses, activeFilter]);
+  // Filter items locally
+  const filteredData = useMemo(() => {
+    if (activeFilter === 'All') return allData;
+    return allData.filter(e => e.category === activeFilter);
+  }, [allData, activeFilter]);
 
-  const handleDelete = async (id: string) => {
-    await syncDeleteExpense(id);
+  const handleDelete = async (id: string, type: 'expense' | 'income') => {
+    if (type === 'expense') {
+      await syncDeleteExpense(id);
+    } else {
+      await syncDeleteIncome(id);
+    }
     setSwipedId(null);
   };
 
   // Grouping logic
-  const groupedExpenses = useMemo(() => {
-    const groups: Record<string, { total: number; items: Expense[] }> = {};
+  const groupedData = useMemo(() => {
+    const groups: Record<string, { total: number; items: (Expense & { type: 'expense' | 'income' })[] }> = {};
     
-    filteredExpenses.forEach(exp => {
-      const monthYear = format(parseISO(exp.date), 'MMMM yyyy');
+    filteredData.forEach(item => {
+      const monthYear = format(parseISO(item.date), 'MMMM yyyy');
       if (!groups[monthYear]) {
         groups[monthYear] = { total: 0, items: [] };
       }
-      groups[monthYear].items.push(exp);
-      groups[monthYear].total += Number(exp.amount);
+      groups[monthYear].items.push(item);
+      if (item.type === 'expense') {
+        groups[monthYear].total -= Number(item.amount);
+      } else {
+        groups[monthYear].total += Number(item.amount);
+      }
     });
     
     return Object.entries(groups).sort((a, b) => {
       return new Date(b[1].items[0].date).getTime() - new Date(a[1].items[0].date).getTime();
     });
-  }, [filteredExpenses]);
+  }, [filteredData]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -58,7 +73,7 @@ export default function HistoryPage() {
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 h-[64px] flex items-center justify-between border-b border-border">
         <h1 className="font-serif text-[24px] font-semibold text-on-surface">History</h1>
         <div className="text-[12px] text-on-surface-variant font-medium uppercase tracking-wider">
-          {filteredExpenses.length} Total
+          {filteredData.length} Total
         </div>
       </header>
 
@@ -79,28 +94,28 @@ export default function HistoryPage() {
               </div>
             ))}
           </div>
-        ) : groupedExpenses.length > 0 ? (
+        ) : groupedData.length > 0 ? (
           <div className="flex flex-col gap-8">
-            {groupedExpenses.map(([monthYear, { total, items }]) => (
+            {groupedData.map(([monthYear, { total, items }]) => (
               <div key={monthYear} className="flex flex-col gap-3">
                 <div className="flex items-center justify-between px-1">
                   <h2 className="font-serif text-[18px] text-on-surface">{monthYear}</h2>
-                  <span className="font-mono text-[14px] text-on-surface-variant font-medium">
-                    {currencyFormatter.format(total)}
+                  <span className={`font-mono text-[14px] font-medium ${total >= 0 ? 'text-green-600' : 'text-on-surface-variant'}`}>
+                    {total >= 0 ? '+' : ''}{currencyFormatter.format(total)}
                   </span>
                 </div>
                 
                 <div className="card overflow-hidden divide-y divide-border/50">
-                  {items.map((expense) => (
-                    <div key={expense.id} className="relative group overflow-hidden">
+                  {items.map((item) => (
+                    <div key={item.id} className="relative group overflow-hidden">
                       {/* Actions Overlay */}
                       <div 
-                        className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${swipedId === expense.id ? 'translate-x-0' : 'translate-x-full'}`}
+                        className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${swipedId === item.id ? 'translate-x-0' : 'translate-x-full'}`}
                       >
                         <div 
                           className="w-1/2 bg-blue-500 flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors"
                           onClick={() => {
-                            setEditingExpense(expense);
+                            setEditingItem(item);
                             setSwipedId(null);
                           }}
                         >
@@ -108,22 +123,23 @@ export default function HistoryPage() {
                         </div>
                         <div 
                           className="w-1/2 bg-red-500 flex items-center justify-center text-white cursor-pointer hover:bg-red-600 transition-colors"
-                          onClick={() => handleDelete(expense.id)}
+                          onClick={() => handleDelete(item.id, item.type)}
                         >
                           <Trash2 size={24} />
                         </div>
                       </div>
 
                       <div 
-                        className={`transition-transform duration-200 bg-surface ${swipedId === expense.id ? '-translate-x-[160px]' : 'translate-x-0'}`}
-                        onClick={() => setSwipedId(swipedId === expense.id ? null : expense.id)}
+                        className={`transition-transform duration-200 bg-surface ${swipedId === item.id ? '-translate-x-[160px]' : 'translate-x-0'}`}
+                        onClick={() => setSwipedId(swipedId === item.id ? null : item.id)}
                       >
                         <ExpenseRow 
-                          id={expense.id}
-                          amount={Number(expense.amount)}
-                          category={expense.category}
-                          note={expense.note || ''}
-                          date={expense.date}
+                          id={item.id}
+                          amount={Number(item.amount)}
+                          category={item.category}
+                          note={item.note || ''}
+                          date={item.date}
+                          type={item.type}
                           showFullDate={true}
                         />
                       </div>
@@ -138,15 +154,15 @@ export default function HistoryPage() {
             <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
               <Trash2 size={32} />
             </div>
-            <p className="text-on-surface-variant text-[14px] font-medium">No expenses found</p>
+            <p className="text-on-surface-variant text-[14px] font-medium">No transactions found</p>
           </div>
         )}
       </div>
 
       <ExpenseModal 
-        isOpen={!!editingExpense} 
-        initialData={editingExpense} 
-        onClose={() => setEditingExpense(null)} 
+        isOpen={!!editingItem} 
+        initialData={editingItem} 
+        onClose={() => setEditingItem(null)} 
       />
     </div>
   );
