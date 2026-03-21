@@ -15,7 +15,7 @@ const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), { ssr: f
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
 
 export default function HistoryPage() {
-  const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched, refreshData } = useExpenseData();
+  const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched } = useExpenseData();
   const [activeFilter, setActiveFilter] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Category, Expense, ChatResponse, Income, ChatAction } from './models';
+import { Expense, ChatResponse, Income, ChatAction } from './models';
 
 const MODELS = [
     'gemma-3-27b-it', // Primary (Instruction Tuned)
@@ -18,7 +18,7 @@ interface GeminiResponse {
 }
 
 async function callGemini(prompt: string): Promise<GeminiResponse> {
-    let lastError: any;
+    let lastError: Error | unknown;
 
     for (const modelName of MODELS) {
         try {
@@ -47,9 +47,10 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
                 // If it's just text, treat it as the answer
                 return { answer: text, actions: [] };
             }
-        } catch (err: any) {
-            console.error(`Error with model ${modelName}:`, err?.message || err);
-            lastError = err;
+        } catch (err: unknown) {
+            const e = err as Error;
+            console.error(`Error with model ${modelName}:`, e.message || e);
+            lastError = e;
             // Continue to next model in loop
             continue;
         }
@@ -171,7 +172,7 @@ export async function processSageChatStream(
     Incomes: ${JSON.stringify(incomes)}
     User Message: ${message}`;
 
-    let lastError: any;
+    let lastError: Error | unknown;
 
     for (const modelName of MODELS) {
         try {
@@ -202,14 +203,15 @@ export async function processSageChatStream(
                     }
                 }
             });
-        } catch (err: any) {
-            console.error(`Failed to start stream with model ${modelName}:`, err?.message || err);
-            lastError = err;
+        } catch (err: unknown) {
+            const e = err as { message?: string, status?: number };
+            console.error(`Failed to start stream with model ${modelName}:`, e.message || e);
+            lastError = e;
             // Only fallback if it's a transient error or not found
-            if (err?.status === 503 || err?.status === 429 || err?.status === 404) {
+            if (e.status === 503 || e.status === 429 || e.status === 404) {
                 continue;
             }
-            throw err; // For other errors, fail fast
+            throw e; // For other errors, fail fast
         }
     }
 

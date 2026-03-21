@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { House, Clock, Sparkles, User, Plus, Sun, Moon, WifiOff, Tag, Settings } from 'lucide-react';
+import { House, Clock, Sparkles, Plus, Sun, Moon, WifiOff, Settings } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
@@ -37,7 +37,7 @@ interface MobileShellProps {
 
 const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
   const pathname = usePathname();
-  const { user } = useAuth();
+  useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hasRenderedModal, setHasRenderedModal] = useState(false);
   const [isOffline, setIsOffline] = useState(false);

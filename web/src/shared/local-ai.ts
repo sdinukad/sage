@@ -565,8 +565,6 @@ function buildQueryAnswer(
     const thisWeekStart = new Date(now.getTime() - (now.getDay() * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
     const todayStr = now.toISOString().split('T')[0];
 
-    const textLower = (entities.note || '').toLowerCase();
-
     // Determine time filter from original note/query text
     let filtered = expenses;
     let timeLabel = '';

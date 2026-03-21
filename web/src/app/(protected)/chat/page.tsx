@@ -25,7 +25,7 @@ type ChatMode = 'ask' | 'edit';
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { expenses, categories, incomes, refreshData } = useExpenseData();
+  const { expenses, categories, refreshData } = useExpenseData();
   const [mode] = useState<ChatMode>('ask');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);

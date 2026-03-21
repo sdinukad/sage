@@ -1,11 +1,10 @@
 'use client';
 
 import HeroCard from '@/components/HeroCard';
-import ExpenseRow from '@/components/ExpenseRow';
 import { CATEGORY_COLORS } from '@/components/CategoryBadge';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
-import { syncDeleteExpense } from '@/lib/sync';
+import { Expense } from '@/shared/models';
 import { format } from 'date-fns';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -28,7 +27,7 @@ export default function Dashboard() {
       });
     }
 
-    expenses.forEach((exp: any) => {
+    expenses.forEach((exp: Expense) => {
       const entry = data.find(d => d.date === exp.date);
       if (entry) {
         entry.amount += Number(exp.amount);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut, User, Loader2, Settings, Tag, ChevronRight } from 'lucide-react';
+import { LogOut, Loader2, Settings, Tag, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function ProfilePage() {

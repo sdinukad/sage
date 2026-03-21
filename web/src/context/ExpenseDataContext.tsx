@@ -59,7 +59,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
 
   const expenses = useMemo(() => {
     const all = (localExpenses || []) as Expense[];
-    return all.filter(e => (e as any).sync_status !== 'pending_delete');
+    return all.filter(e => (e as Expense & { sync_status?: string }).sync_status !== 'pending_delete');
   }, [localExpenses]);
   const incomes = useMemo(() => (localIncomes || []) as Income[], [localIncomes]);
   const categories = useMemo(() => {
@@ -113,7 +113,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     }
   }, [user, fetchSupabaseBackground]);
 
-  const addCategory = async (name: string, type: 'expense' | 'income', color?: string) => {
+  const addCategory = useCallback(async (name: string, type: 'expense' | 'income', color?: string) => {
     if (!user) return;
     await syncAddCategory({
       id: crypto.randomUUID(),
@@ -122,11 +122,11 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
       type,
       color: color || '#8395a7'
     });
-  };
+  }, [user]);
 
-  const deleteCategory = async (id: string) => {
+  const deleteCategory = useCallback(async (id: string) => {
     await syncDeleteCategory(id);
-  };
+  }, []);
 
   // Compute stats synchronously from local DB updates
   const stats = useMemo(() => {
@@ -179,7 +179,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     refreshData: fetchSupabaseBackground,
     addCategory,
     deleteCategory
-  }), [expenses, recentExpenses, incomes, categories, stats, loading, hasFetched, fetchSupabaseBackground]);
+  }), [expenses, recentExpenses, incomes, categories, stats, loading, hasFetched, fetchSupabaseBackground, addCategory, deleteCategory]);
 
   return (
     <ExpenseDataContext.Provider value={value}>
