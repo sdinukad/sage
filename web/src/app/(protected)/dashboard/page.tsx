@@ -120,7 +120,7 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => currencyFormatter.format(value)}
+                    formatter={(value: number | string | readonly (number | string)[] | undefined) => currencyFormatter.format(Number(Array.isArray(value) ? value[0] : value) || 0)}
                     contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     itemStyle={{ color: 'var(--on-surface)' }}
                   />
@@ -152,7 +152,7 @@ export default function Dashboard() {
                   />
                   <Tooltip 
                     cursor={{ fill: 'var(--surface-container-high)' }}
-                    formatter={(value: number) => [currencyFormatter.format(value), 'Spent']}
+                    formatter={(value: number | string | readonly (number | string)[] | undefined) => [currencyFormatter.format(Number(Array.isArray(value) ? value[0] : value) || 0), 'Spent']}
                     contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                     labelStyle={{ color: 'var(--on-surface-variant)', marginBottom: '4px' }}
                   />
