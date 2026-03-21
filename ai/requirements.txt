@@ -1,0 +1,5 @@
+transformers>=4.40
+datasets>=2.19
+torch>=2.2
+optimum[onnxruntime]>=1.19
+accelerate>=0.30

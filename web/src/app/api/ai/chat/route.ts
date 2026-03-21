@@ -1,32 +1,16 @@
-import { processSageChatStream } from '@/shared/gemini';
+import { processChat } from '@/shared/local-ai';
 import { Income, Expense } from '@/shared/models';
 import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
     const { message, expenseCategories, incomeCategories } = await req.json();
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('CRITICAL: GEMINI_API_KEY is null or undefined in API route');
-    } else {
-      console.log(`GEMINI_API_KEY is present (starts with ${apiKey.substring(0, 5)}...)`);
-    }
-
-    if (!apiKey) {
-      console.error('Missing GEMINI_API_KEY');
-      return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured.' },
-        { status: 500 }
-      );
-    }
-
-    // Initialize Supabase client to fetch incomes
+    // Initialize Supabase client
     const cookieStore = cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,14 +40,13 @@ export async function POST(req: Request) {
       supabase.from('expenses').select('*').order('date', { ascending: false })
     ]);
 
-    console.log('Chat API Request context:', { 
+    console.log('Chat API Request:', { 
       messageLength: message?.length, 
       expensesCount: expenses?.length || 0,
       incomesCount: incomes?.length || 0,
-      hasGeminiKey: !!apiKey
     });
 
-    const stream = await processSageChatStream(
+    const result = await processChat(
       message, 
       (expenses as Expense[]) || [], 
       expenseCategories || [],
@@ -71,14 +54,9 @@ export async function POST(req: Request) {
       (incomes as Income[]) || []
     );
 
-    console.log('Chat API Streaming started');
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-      },
-    });
+    console.log('Chat API Response:', { answer: result.answer.substring(0, 80), actionsCount: result.actions.length });
+
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Chat API Error:', error);

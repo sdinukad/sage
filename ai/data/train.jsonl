@@ -1,0 +1,960 @@
+{"text": "show Other expenses", "label": "query"}
+{"text": "shoes was 10000", "label": "add_expense"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "correct burger to 1000", "label": "edit_expense"}
+{"text": "my Bonus is 200", "label": "add_income"}
+{"text": "spotify on the 15th 450", "label": "add_expense"}
+{"text": "earned 1200 from Salary", "label": "add_income"}
+{"text": "update water bill amount to 4000", "label": "edit_expense"}
+{"text": "just paid 80000 for stationery", "label": "add_expense"}
+{"text": "takeaway was 75000", "label": "add_expense"}
+{"text": "75000 Dinner this week", "label": "add_expense"}
+{"text": "income 120000 Freelance", "label": "add_income"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "how much have I spent?", "label": "query"}
+{"text": "deposited 10000", "label": "add_income"}
+{"text": "how much did I spend last week?", "label": "query"}
+{"text": "move Gift income to Freelance", "label": "edit_income"}
+{"text": "petrol was 15000", "label": "add_expense"}
+{"text": "Freelance 7500", "label": "add_income"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "i got 30000 as Freelance", "label": "add_income"}
+{"text": "spending summary", "label": "query"}
+{"text": "got my Freelance of 6000", "label": "add_income"}
+{"text": "update the Other expense to 1000", "label": "edit_expense"}
+{"text": "fix water bill it was 250", "label": "edit_expense"}
+{"text": "edit Other income to 300", "label": "edit_income"}
+{"text": "burger came to 12000", "label": "add_expense"}
+{"text": "earned 10000", "label": "add_income"}
+{"text": "i bought dinner 60000", "label": "add_expense"}
+{"text": "income 20000 Investment", "label": "add_income"}
+{"text": "show me my expenses", "label": "query"}
+{"text": "cashed in 450 for Freelance", "label": "add_income"}
+{"text": "find medicine", "label": "query"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "that breakfast was on last week not today", "label": "edit_expense"}
+{"text": "made 6000 doing art piece", "label": "add_income"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "total spending on Rent", "label": "query"}
+{"text": "change insurance to 50000", "label": "edit_expense"}
+{"text": "modify fuel amount to 20000", "label": "edit_expense"}
+{"text": "received Investment 450", "label": "add_income"}
+{"text": "dropped 7500 on laundry", "label": "add_expense"}
+{"text": "change grab category to Shopping", "label": "edit_expense"}
+{"text": "add 120000 for books", "label": "add_expense"}
+{"text": "spent 250 on Transport", "label": "add_expense"}
+{"text": "rent tab was 800", "label": "add_expense"}
+{"text": "food expenses this week", "label": "query"}
+{"text": "cashed in 1500 for Freelance", "label": "add_income"}
+{"text": "received my Other 400", "label": "add_income"}
+{"text": "3000 Groceries this week", "label": "add_expense"}
+{"text": "how much did I spend in March?", "label": "query"}
+{"text": "got paid 750 last Tuesday", "label": "add_income"}
+{"text": "i received 150000 Gift", "label": "add_income"}
+{"text": "move Investment income to Investment", "label": "edit_income"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "blew 150 on parking", "label": "add_expense"}
+{"text": "modify restaurant amount to 2500", "label": "edit_expense"}
+{"text": "movie cost 60000", "label": "add_expense"}
+{"text": "income 15000 Salary", "label": "add_income"}
+{"text": "change yesterday's fuel to 600", "label": "edit_expense"}
+{"text": "got 60000 Investment", "label": "add_income"}
+{"text": "list all expenses", "label": "query"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "change Gift amount to 600", "label": "edit_income"}
+{"text": "change laundry category to Dinner", "label": "edit_expense"}
+{"text": "just spent 8000 on kottu", "label": "add_expense"}
+{"text": "where does my money go?", "label": "query"}
+{"text": "bought groceries for 1500", "label": "add_expense"}
+{"text": "clothes 2000", "label": "add_expense"}
+{"text": "i spent 7500 on netflix", "label": "add_expense"}
+{"text": "cashed in 3000 for Salary", "label": "add_income"}
+{"text": "update Gift to 12000", "label": "edit_income"}
+{"text": "got paid 25000 yesterday", "label": "add_income"}
+{"text": "change yesterday's stationery to 20000", "label": "edit_expense"}
+{"text": "change salary to 35000", "label": "edit_income"}
+{"text": "change taxi to 1000", "label": "edit_expense"}
+{"text": "bought dentist for 75000", "label": "add_expense"}
+{"text": "spent rs. 75000 for spotify", "label": "add_expense"}
+{"text": "won 1500 from Gift", "label": "add_income"}
+{"text": "recategorize water bill as Phone", "label": "edit_expense"}
+{"text": "edit expense bus", "label": "edit_expense"}
+{"text": "putting down 30000 for books", "label": "add_expense"}
+{"text": "how much did I spend yesterday?", "label": "query"}
+{"text": "won 50 from Investment", "label": "add_income"}
+{"text": "correct restaurant to 25000", "label": "edit_expense"}
+{"text": "change income category to Salary", "label": "edit_income"}
+{"text": "search uber", "label": "query"}
+{"text": "update Salary to 8000", "label": "edit_income"}
+{"text": "8000 on kottu", "label": "add_expense"}
+{"text": "how much on transport?", "label": "query"}
+{"text": "recategorize movie as Bills", "label": "edit_expense"}
+{"text": "25000 on petrol", "label": "add_expense"}
+{"text": "i received 100 Gift", "label": "add_income"}
+{"text": "my pizza was 8000", "label": "add_expense"}
+{"text": "modify takeaway amount to 60000", "label": "edit_expense"}
+{"text": "my coffee was 50000", "label": "add_expense"}
+{"text": "fix the fuel expense", "label": "edit_expense"}
+{"text": "added 300 income", "label": "add_income"}
+{"text": "got paid 12000 last week", "label": "add_income"}
+{"text": "what did I spend on Internet?", "label": "query"}
+{"text": "change date of clothes to on Friday", "label": "edit_expense"}
+{"text": "total expenses this month", "label": "query"}
+{"text": "new expense 80000 stationery", "label": "add_expense"}
+{"text": "received 20000 Investment", "label": "add_income"}
+{"text": "just spent 15000 on dentist", "label": "add_expense"}
+{"text": "my Investment is 5000", "label": "add_income"}
+{"text": "move restaurant to Clothing", "label": "edit_expense"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "water bill should be 300", "label": "edit_expense"}
+{"text": "spent rs. 300 for fuel", "label": "add_expense"}
+{"text": "fix the Investment income", "label": "edit_income"}
+{"text": "received Bonus 15000", "label": "add_income"}
+{"text": "income 10000 Freelance", "label": "add_income"}
+{"text": "pharmacy bill 200", "label": "add_expense"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "spent about 3500 on clothes", "label": "add_expense"}
+{"text": "received Bonus 2000", "label": "add_income"}
+{"text": "put 15000 down for breakfast", "label": "add_expense"}
+{"text": "log income 300", "label": "add_income"}
+{"text": "i got 600 as Other", "label": "add_income"}
+{"text": "3500 Groceries this morning", "label": "add_expense"}
+{"text": "fix the Freelance income", "label": "edit_income"}
+{"text": "had pharmacy for 2500", "label": "add_expense"}
+{"text": "added 1500 income", "label": "add_income"}
+{"text": "list all expenses", "label": "query"}
+{"text": "spent rs 100 on shoes", "label": "add_expense"}
+{"text": "update my last expense", "label": "edit_expense"}
+{"text": "correct shoes to 4000", "label": "edit_expense"}
+{"text": "what did I spend on Health?", "label": "query"}
+{"text": "6000 Other received", "label": "add_income"}
+{"text": "lost 4000 to pharmacy", "label": "add_expense"}
+{"text": "sold art piece for 1200", "label": "add_income"}
+{"text": "lkr 150000 for fuel", "label": "add_expense"}
+{"text": "expense 200 supermarket", "label": "add_expense"}
+{"text": "7500 rupees for rent", "label": "add_expense"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "correct my Bonus to 20000", "label": "edit_income"}
+{"text": "change yesterday's uber to 35000", "label": "edit_expense"}
+{"text": "made 30000 doing freelance work", "label": "add_income"}
+{"text": "change income from 10000 to 100000", "label": "edit_income"}
+{"text": "lkr 150 for electricity bill", "label": "add_expense"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "edit income to 1000", "label": "edit_income"}
+{"text": "move groceries to Fuel", "label": "edit_expense"}
+{"text": "how much was spotify?", "label": "query"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "paid 1500 for fuel", "label": "add_expense"}
+{"text": "i bought water bill 200", "label": "add_expense"}
+{"text": "my Investment is 75000", "label": "add_income"}
+{"text": "put 350 down for snacks", "label": "add_expense"}
+{"text": "dropped 1200 on books", "label": "add_expense"}
+{"text": "change date of uber to last month", "label": "edit_expense"}
+{"text": "last 10 expenses", "label": "query"}
+{"text": "cost me 7500 for gas", "label": "add_expense"}
+{"text": "received Bonus 750", "label": "add_income"}
+{"text": "how much did I spend in March?", "label": "query"}
+{"text": "the Gift was 7500", "label": "edit_income"}
+{"text": "100 rupees books", "label": "add_expense"}
+{"text": "spent rs 6000 on string hoppers", "label": "add_expense"}
+{"text": "spent about 2500 on parking", "label": "add_expense"}
+{"text": "putting down 300 for burger", "label": "add_expense"}
+{"text": "modify the clothes entry", "label": "edit_expense"}
+{"text": "what's my net balance?", "label": "query"}
+{"text": "charged 350 for electricity bill", "label": "add_expense"}
+{"text": "got my salary 60000", "label": "add_income"}
+{"text": "salary came 2500", "label": "add_income"}
+{"text": "change Gift amount to 75000", "label": "edit_income"}
+{"text": "search toll", "label": "query"}
+{"text": "received my Other 10000", "label": "add_income"}
+{"text": "spent 120000 on Electricity", "label": "add_expense"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "modify the pizza entry", "label": "edit_expense"}
+{"text": "fix delivery it was 6000", "label": "edit_expense"}
+{"text": "spending trend", "label": "query"}
+{"text": "shoes cost 12000", "label": "add_expense"}
+{"text": "fix the Gift income", "label": "edit_income"}
+{"text": "add income 20000 Investment", "label": "add_income"}
+{"text": "fix dentist it was 8000", "label": "edit_expense"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "spent about 7500 on electricity bill", "label": "add_expense"}
+{"text": "got 3000 Investment", "label": "add_income"}
+{"text": "my salary is actually 500", "label": "edit_income"}
+{"text": "how much did I spend on Shopping?", "label": "query"}
+{"text": "change yesterday's haircut to 350", "label": "edit_expense"}
+{"text": "fix taxi it was 80000", "label": "edit_expense"}
+{"text": "how much have I spent?", "label": "query"}
+{"text": "salary came 150", "label": "add_income"}
+{"text": "i spent 15000 on petrol", "label": "add_expense"}
+{"text": "the doctor was 100000 not 250", "label": "edit_expense"}
+{"text": "how much was dentist?", "label": "query"}
+{"text": "salary should be 800", "label": "edit_income"}
+{"text": "got a Other of 1500", "label": "add_income"}
+{"text": "netflix should be 600", "label": "edit_expense"}
+{"text": "income 4000 Other", "label": "add_income"}
+{"text": "made 600 doing old phone", "label": "add_income"}
+{"text": "6000 Gift received", "label": "add_income"}
+{"text": "show my spending", "label": "query"}
+{"text": "add 75000 for coffee", "label": "add_expense"}
+{"text": "change the amount of rice and curry to 25000", "label": "edit_expense"}
+{"text": "show me my expenses", "label": "query"}
+{"text": "spent 50 on fuel earlier today", "label": "add_expense"}
+{"text": "gifts expense 1500", "label": "add_expense"}
+{"text": "got my salary 7500", "label": "add_income"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "i got 15000 as Other", "label": "add_income"}
+{"text": "add expense 100000 Other", "label": "add_expense"}
+{"text": "modify the snacks entry", "label": "edit_expense"}
+{"text": "monthly summary", "label": "query"}
+{"text": "stationery should be 4000", "label": "edit_expense"}
+{"text": "lunch 3 days ago 500", "label": "add_expense"}
+{"text": "Gift 7500", "label": "add_income"}
+{"text": "daily average", "label": "query"}
+{"text": "update stationery description to books", "label": "edit_expense"}
+{"text": "i bought doctor 25000", "label": "add_expense"}
+{"text": "salary should be 5000", "label": "edit_income"}
+{"text": "cashed in 30000 for Salary", "label": "add_income"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "Freelance payment 250", "label": "add_income"}
+{"text": "75000 from Freelance gig", "label": "add_income"}
+{"text": "paid 15000 for petrol", "label": "add_expense"}
+{"text": "edit last Electricity expense", "label": "edit_expense"}
+{"text": "6000 rupees for pharmacy", "label": "add_expense"}
+{"text": "pizza this morning 300", "label": "add_expense"}
+{"text": "where does my money go?", "label": "query"}
+{"text": "450 on grab", "label": "add_expense"}
+{"text": "dentist came to 35000", "label": "add_expense"}
+{"text": "edit expense lunch", "label": "edit_expense"}
+{"text": "log 150 coffee", "label": "add_expense"}
+{"text": "average daily spending", "label": "query"}
+{"text": "that rent was on last Tuesday not today", "label": "edit_expense"}
+{"text": "edit gas to 500", "label": "edit_expense"}
+{"text": "what are my top expenses?", "label": "query"}
+{"text": "charged 75000 for rice and curry", "label": "add_expense"}
+{"text": "snacks cost 200", "label": "add_expense"}
+{"text": "what did I spend on Coffee?", "label": "query"}
+{"text": "move water bill to Shopping", "label": "edit_expense"}
+{"text": "show Snacks expenses", "label": "query"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "update books description to doctor", "label": "edit_expense"}
+{"text": "used 75000 for shoes", "label": "add_expense"}
+{"text": "lost 60000 to delivery", "label": "add_expense"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "record 80000 for Clothing", "label": "add_expense"}
+{"text": "edit expense rice and curry", "label": "edit_expense"}
+{"text": "i got 80000 as Salary", "label": "add_income"}
+{"text": "expense 2500 gym membership", "label": "add_expense"}
+{"text": "60000 income from Freelance", "label": "add_income"}
+{"text": "salary 50", "label": "add_income"}
+{"text": "compare income vs expenses", "label": "query"}
+{"text": "had lunch for 100", "label": "add_expense"}
+{"text": "fix salary it was 3000", "label": "edit_income"}
+{"text": "8000 bus", "label": "add_expense"}
+{"text": "total income", "label": "query"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "haircut tab was 600", "label": "add_expense"}
+{"text": "how much on transport?", "label": "query"}
+{"text": "450 rupees for laundry", "label": "add_expense"}
+{"text": "add income 1500 Bonus", "label": "add_income"}
+{"text": "expense 1000 supermarket", "label": "add_expense"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "got 400 Other", "label": "add_income"}
+{"text": "salary 600", "label": "add_income"}
+{"text": "last 10 expenses", "label": "query"}
+{"text": "edit gifts to 6000", "label": "edit_expense"}
+{"text": "modify restaurant amount to 150000", "label": "edit_expense"}
+{"text": "5000 for taxi", "label": "add_expense"}
+{"text": "average daily spending", "label": "query"}
+{"text": "recategorize income as Salary", "label": "edit_income"}
+{"text": "correct last Electricity", "label": "edit_expense"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "find snacks", "label": "query"}
+{"text": "coffee took 50 from me", "label": "add_expense"}
+{"text": "received Salary 100", "label": "add_income"}
+{"text": "fix takeaway it was 7500", "label": "edit_expense"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "300 Fuel two days ago", "label": "add_expense"}
+{"text": "spent rs 8000 on restaurant", "label": "add_expense"}
+{"text": "spent about 30000 on pizza", "label": "add_expense"}
+{"text": "cost me 450 for bus", "label": "add_expense"}
+{"text": "correct last Groceries", "label": "edit_expense"}
+{"text": "cashed in 12000 for Salary", "label": "add_income"}
+{"text": "stationery should be 800", "label": "edit_expense"}
+{"text": "find lunch", "label": "query"}
+{"text": "am I saving money?", "label": "query"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "earned 80000", "label": "add_income"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "received Salary 450", "label": "add_income"}
+{"text": "how much did I spend yesterday?", "label": "query"}
+{"text": "find pharmacy", "label": "query"}
+{"text": "spending trend", "label": "query"}
+{"text": "used 15000 for dinner", "label": "add_expense"}
+{"text": "bought haircut for 40000", "label": "add_expense"}
+{"text": "i bought toll 15000", "label": "add_expense"}
+{"text": "change yesterday's netflix to 40000", "label": "edit_expense"}
+{"text": "change yesterday's taxi to 25000", "label": "edit_expense"}
+{"text": "the Freelance was 6000", "label": "edit_income"}
+{"text": "spent 150 for parking", "label": "add_expense"}
+{"text": "correct books to 150000", "label": "edit_expense"}
+{"text": "monthly summary", "label": "query"}
+{"text": "received my Gift 500", "label": "add_income"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "i got 150000 as Gift", "label": "add_income"}
+{"text": "400 on clothes", "label": "add_expense"}
+{"text": "made 200 doing coding", "label": "add_income"}
+{"text": "update the Coffee expense to 10000", "label": "edit_expense"}
+{"text": "correct my Other to 4000", "label": "edit_income"}
+{"text": "change yesterday's lunch to 75000", "label": "edit_expense"}
+{"text": "used 75000 for gas", "label": "add_expense"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "won 150 from Bonus", "label": "add_income"}
+{"text": "move Other income to Freelance", "label": "edit_income"}
+{"text": "search stationery", "label": "query"}
+{"text": "change yesterday's toll to 4000", "label": "edit_expense"}
+{"text": "edit expense bus", "label": "edit_expense"}
+{"text": "i received 600 Bonus", "label": "add_income"}
+{"text": "correct last Groceries", "label": "edit_expense"}
+{"text": "log 10000 breakfast", "label": "add_expense"}
+{"text": "edit expense bus", "label": "edit_expense"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "total expenses this month", "label": "query"}
+{"text": "am I saving money?", "label": "query"}
+{"text": "log 1200 rice and curry", "label": "add_expense"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "show my incomes", "label": "query"}
+{"text": "food expenses this week", "label": "query"}
+{"text": "salary came 2000", "label": "add_income"}
+{"text": "change Gift amount to 120000", "label": "edit_income"}
+{"text": "lost 120000 to stationery", "label": "add_expense"}
+{"text": "spent 25000 on dentist two days ago", "label": "add_expense"}
+{"text": "Bonus gig got me 80000", "label": "add_income"}
+{"text": "Freelance payment 75000", "label": "add_income"}
+{"text": "donation was 750", "label": "add_expense"}
+{"text": "received 1500 Bonus", "label": "add_income"}
+{"text": "string hoppers expense 4000", "label": "add_expense"}
+{"text": "pharmacy tab was 12000", "label": "add_expense"}
+{"text": "the delivery was 350 not 500", "label": "edit_expense"}
+{"text": "spending trend", "label": "query"}
+{"text": "fix laundry it was 80000", "label": "edit_expense"}
+{"text": "when did I buy string hoppers?", "label": "query"}
+{"text": "add income 350 Salary", "label": "add_income"}
+{"text": "how much on transport?", "label": "query"}
+{"text": "update my salary to 40000", "label": "edit_income"}
+{"text": "how much on Phone?", "label": "query"}
+{"text": "my gym membership was 500", "label": "add_expense"}
+{"text": "lunch tab was 15000", "label": "add_expense"}
+{"text": "Other came in 200", "label": "add_income"}
+{"text": "received 120000 Gift", "label": "add_income"}
+{"text": "salary came 6000", "label": "add_income"}
+{"text": "Gift payment 1500", "label": "add_income"}
+{"text": "correct pharmacy to 100", "label": "edit_expense"}
+{"text": "paycheck 1000", "label": "add_income"}
+{"text": "paid 25000 for train", "label": "add_expense"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "when did I buy dinner?", "label": "query"}
+{"text": "spent 2500 on insurance this morning", "label": "add_expense"}
+{"text": "8000 for petrol", "label": "add_expense"}
+{"text": "change Gym from on Monday to 200", "label": "edit_expense"}
+{"text": "total spending on Coffee", "label": "query"}
+{"text": "had spotify for 3000", "label": "add_expense"}
+{"text": "got paid 150000 today", "label": "add_income"}
+{"text": "average daily spending", "label": "query"}
+{"text": "just paid 20000 for snacks", "label": "add_expense"}
+{"text": "spent rs 350 on gas", "label": "add_expense"}
+{"text": "paid 100000 for string hoppers", "label": "add_expense"}
+{"text": "lkr 80000 for clothes", "label": "add_expense"}
+{"text": "change the amount of kottu to 150000", "label": "edit_expense"}
+{"text": "fix the Other income", "label": "edit_income"}
+{"text": "when did I buy bus?", "label": "query"}
+{"text": "i spent 3500 on movie", "label": "add_expense"}
+{"text": "Other 50", "label": "add_income"}
+{"text": "7500 rupees for gifts", "label": "add_expense"}
+{"text": "update my salary to 5000", "label": "edit_income"}
+{"text": "received 750 Salary last month", "label": "add_income"}
+{"text": "update the Internet expense to 450", "label": "edit_expense"}
+{"text": "books was 1500", "label": "add_expense"}
+{"text": "my Investment is 100000", "label": "add_income"}
+{"text": "update electricity bill amount to 7500", "label": "edit_expense"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "how much did I spend yesterday?", "label": "query"}
+{"text": "blew 120000 on uber", "label": "add_expense"}
+{"text": "cleared 8000 from Gift", "label": "add_income"}
+{"text": "edit last Phone expense", "label": "edit_expense"}
+{"text": "change Groceries from last week to 6000", "label": "edit_expense"}
+{"text": "i got 80000 as Salary", "label": "add_income"}
+{"text": "what did I spend on Health?", "label": "query"}
+{"text": "spent about 50000 on uber", "label": "add_expense"}
+{"text": "monthly summary", "label": "query"}
+{"text": "fix salary it was 400", "label": "edit_income"}
+{"text": "recategorize income as Bonus", "label": "edit_income"}
+{"text": "fix books it was 750", "label": "edit_expense"}
+{"text": "when did I buy clothes?", "label": "query"}
+{"text": "salary came 200", "label": "add_income"}
+{"text": "cost me 25000 for snacks", "label": "add_expense"}
+{"text": "cashed in 30000 for Freelance", "label": "add_income"}
+{"text": "spent rs 2000 on parking", "label": "add_expense"}
+{"text": "total spending on Entertainment", "label": "query"}
+{"text": "made 450 doing art piece", "label": "add_income"}
+{"text": "log 40000 shoes", "label": "add_expense"}
+{"text": "put 5000 down for shoes", "label": "add_expense"}
+{"text": "update kottu amount to 600", "label": "edit_expense"}
+{"text": "bought gym membership for 15000", "label": "add_expense"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "total spending on Transport", "label": "query"}
+{"text": "dentist bill 1200", "label": "add_expense"}
+{"text": "show my spending", "label": "query"}
+{"text": "spending summary", "label": "query"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "12000 Salary received", "label": "add_income"}
+{"text": "received my Freelance 600", "label": "add_income"}
+{"text": "change the amount of movie to 5000", "label": "edit_expense"}
+{"text": "12000 rupees for groceries", "label": "add_expense"}
+{"text": "received payment 60000", "label": "add_income"}
+{"text": "got my salary 20000", "label": "add_income"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "search coffee", "label": "query"}
+{"text": "change pizza to 8000", "label": "edit_expense"}
+{"text": "25000 income from Freelance", "label": "add_income"}
+{"text": "lost 1500 to train", "label": "add_expense"}
+{"text": "edit last Internet expense", "label": "edit_expense"}
+{"text": "i bought snacks 75000", "label": "add_expense"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "Freelance payment 250", "label": "add_income"}
+{"text": "move parking to Bills", "label": "edit_expense"}
+{"text": "got my Investment of 80000", "label": "add_income"}
+{"text": "change Gift amount to 3000", "label": "edit_income"}
+{"text": "change salary to 250", "label": "edit_income"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "compare income vs expenses", "label": "query"}
+{"text": "the bus was 3500 not 35000", "label": "edit_expense"}
+{"text": "change Phone from 3 days ago to 1000", "label": "edit_expense"}
+{"text": "record 25000 for Food", "label": "add_expense"}
+{"text": "400 taxi", "label": "add_expense"}
+{"text": "taxi cost 500", "label": "add_expense"}
+{"text": "80000 rupees for fuel", "label": "add_expense"}
+{"text": "insurance cost 60000", "label": "add_expense"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "how much did I spend yesterday?", "label": "query"}
+{"text": "Investment gig got me 25000", "label": "add_income"}
+{"text": "putting down 150 for medicine", "label": "add_expense"}
+{"text": "paid 3500 for kottu this morning", "label": "add_expense"}
+{"text": "Salary gig got me 150", "label": "add_income"}
+{"text": "edit Freelance income to 20000", "label": "edit_income"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "80000 rupees for pizza", "label": "add_expense"}
+{"text": "won 12000 from Bonus", "label": "add_income"}
+{"text": "Investment came in 25000", "label": "add_income"}
+{"text": "how much was dinner?", "label": "query"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "got 150 Investment", "label": "add_income"}
+{"text": "paid 150 for toll", "label": "add_expense"}
+{"text": "added 4000 income", "label": "add_income"}
+{"text": "just paid 120000 for coffee", "label": "add_expense"}
+{"text": "change income category to Investment", "label": "edit_income"}
+{"text": "i got 2500 as Salary", "label": "add_income"}
+{"text": "what are my top expenses?", "label": "query"}
+{"text": "salary came 4000", "label": "add_income"}
+{"text": "spent 2000 on Lunch", "label": "add_expense"}
+{"text": "putting down 250 for takeaway", "label": "add_expense"}
+{"text": "change income category to Gift", "label": "edit_income"}
+{"text": "show me everything", "label": "query"}
+{"text": "charged 10000 for netflix", "label": "add_expense"}
+{"text": "fix the kottu expense", "label": "edit_expense"}
+{"text": "weekly summary", "label": "query"}
+{"text": "restaurant cost 450", "label": "add_expense"}
+{"text": "blew 200 on netflix", "label": "add_expense"}
+{"text": "fix the Investment income", "label": "edit_income"}
+{"text": "salary should be 300", "label": "edit_income"}
+{"text": "what's my net balance?", "label": "query"}
+{"text": "spent rs 100000 on haircut", "label": "add_expense"}
+{"text": "what's my balance?", "label": "query"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "how much did I spend on Internet?", "label": "query"}
+{"text": "got 200 Investment", "label": "add_income"}
+{"text": "blew 40000 on netflix", "label": "add_expense"}
+{"text": "salary came 75000", "label": "add_income"}
+{"text": "bought spotify for 350", "label": "add_expense"}
+{"text": "move Other income to Gift", "label": "edit_income"}
+{"text": "80000 Bills earlier today", "label": "add_expense"}
+{"text": "show Electricity expenses", "label": "query"}
+{"text": "modify phone bill amount to 30000", "label": "edit_expense"}
+{"text": "parking should be 7500", "label": "edit_expense"}
+{"text": "change income category to Other", "label": "edit_income"}
+{"text": "received payment 15000", "label": "add_income"}
+{"text": "that rice and curry was on yesterday not today", "label": "edit_expense"}
+{"text": "show me everything", "label": "query"}
+{"text": "lost 350 to internet bill", "label": "add_expense"}
+{"text": "edit my last income entry", "label": "edit_income"}
+{"text": "expense summary", "label": "query"}
+{"text": "5000 income from Gift", "label": "add_income"}
+{"text": "groceries should be 12000", "label": "edit_expense"}
+{"text": "Salary gig got me 600", "label": "add_income"}
+{"text": "800 on doctor", "label": "add_expense"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "salary should be 25000", "label": "edit_income"}
+{"text": "paid 500 for pizza last Tuesday", "label": "add_expense"}
+{"text": "correct my Other to 2500", "label": "edit_income"}
+{"text": "add 20000 for toll", "label": "add_expense"}
+{"text": "my train was 12000", "label": "add_expense"}
+{"text": "how much did I spend on Food?", "label": "query"}
+{"text": "got paid 300", "label": "add_income"}
+{"text": "dropped 600 on rice and curry", "label": "add_expense"}
+{"text": "change date of burger to Jan 15", "label": "edit_expense"}
+{"text": "received my Gift 5000", "label": "add_income"}
+{"text": "donation should be 8000", "label": "edit_expense"}
+{"text": "blew 3000 on parking", "label": "add_expense"}
+{"text": "cost me 10000 for insurance", "label": "add_expense"}
+{"text": "edit expense donation", "label": "edit_expense"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "received Investment 30000", "label": "add_income"}
+{"text": "modify internet bill amount to 60000", "label": "edit_expense"}
+{"text": "how much on Shopping?", "label": "query"}
+{"text": "spent 4000 for restaurant", "label": "add_expense"}
+{"text": "spending trend", "label": "query"}
+{"text": "4000 income from Salary", "label": "add_income"}
+{"text": "60000 for kottu", "label": "add_expense"}
+{"text": "salary 1500", "label": "add_income"}
+{"text": "log 1000 gifts", "label": "add_expense"}
+{"text": "that uber was on on the 15th not today", "label": "edit_expense"}
+{"text": "spending summary", "label": "query"}
+{"text": "recategorize movie as Phone", "label": "edit_expense"}
+{"text": "bought haircut for 20000", "label": "add_expense"}
+{"text": "burger tab was 150000", "label": "add_expense"}
+{"text": "spent rs 350 on restaurant", "label": "add_expense"}
+{"text": "cost me 15000 for dentist", "label": "add_expense"}
+{"text": "my salary is actually 200", "label": "edit_income"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "paycheck 400", "label": "add_income"}
+{"text": "change rice and curry category to Clothing", "label": "edit_expense"}
+{"text": "edit last Health expense", "label": "edit_expense"}
+{"text": "recategorize rice and curry as Shopping", "label": "edit_expense"}
+{"text": "put 7500 down for burger", "label": "add_expense"}
+{"text": "earned 20000", "label": "add_income"}
+{"text": "lkr 100000 for lunch", "label": "add_expense"}
+{"text": "got paid 3500 yesterday", "label": "add_income"}
+{"text": "change toll category to Water", "label": "edit_expense"}
+{"text": "paycheck 60000", "label": "add_income"}
+{"text": "log 300 bus", "label": "add_expense"}
+{"text": "dropped 450 on doctor", "label": "add_expense"}
+{"text": "1200 for donation", "label": "add_expense"}
+{"text": "what's my net balance?", "label": "query"}
+{"text": "what are my top expenses?", "label": "query"}
+{"text": "used 100 for water bill", "label": "add_expense"}
+{"text": "80000 on dinner", "label": "add_expense"}
+{"text": "i spent 15000 on coffee", "label": "add_expense"}
+{"text": "recategorize burger as Groceries", "label": "edit_expense"}
+{"text": "show Phone expenses", "label": "query"}
+{"text": "the Bonus was 250", "label": "edit_income"}
+{"text": "200 income from Freelance", "label": "add_income"}
+{"text": "spent 12000 on parking on Friday", "label": "add_expense"}
+{"text": "cashed in 100 for Other", "label": "add_income"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "doctor earlier today 750", "label": "add_expense"}
+{"text": "correct last Snacks", "label": "edit_expense"}
+{"text": "just paid 40000 for rent", "label": "add_expense"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "correct my Gift to 35000", "label": "edit_income"}
+{"text": "what's my total spending?", "label": "query"}
+{"text": "salary should be 200", "label": "edit_income"}
+{"text": "got my salary 80000", "label": "add_income"}
+{"text": "change rice and curry category to Other", "label": "edit_expense"}
+{"text": "my Bonus is 10000", "label": "add_income"}
+{"text": "salary came 750", "label": "add_income"}
+{"text": "daily average", "label": "query"}
+{"text": "update parking amount to 50000", "label": "edit_expense"}
+{"text": "60000 income from Gift", "label": "add_income"}
+{"text": "fix groceries it was 35000", "label": "edit_expense"}
+{"text": "new expense 60000 movie", "label": "add_expense"}
+{"text": "spent 50000 on Dinner", "label": "add_expense"}
+{"text": "i bought pizza 100000", "label": "add_expense"}
+{"text": "find rice and curry", "label": "query"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "450 Snacks last week", "label": "add_expense"}
+{"text": "list all expenses", "label": "query"}
+{"text": "won 1200 from Freelance", "label": "add_income"}
+{"text": "dropped 20000 on parking", "label": "add_expense"}
+{"text": "3000 Other received", "label": "add_income"}
+{"text": "salary should be 450", "label": "edit_income"}
+{"text": "just paid 8000 for petrol", "label": "add_expense"}
+{"text": "received Investment 12000", "label": "add_income"}
+{"text": "find medicine", "label": "query"}
+{"text": "correct last Lunch", "label": "edit_expense"}
+{"text": "correct bus to 25000", "label": "edit_expense"}
+{"text": "am I saving money?", "label": "query"}
+{"text": "modify parking amount to 350", "label": "edit_expense"}
+{"text": "new expense 120000 dinner", "label": "add_expense"}
+{"text": "recategorize water bill as Shopping", "label": "edit_expense"}
+{"text": "change salary to 10000", "label": "edit_income"}
+{"text": "modify medicine amount to 800", "label": "edit_expense"}
+{"text": "list all expenses", "label": "query"}
+{"text": "Salary gig got me 4000", "label": "add_income"}
+{"text": "modify parking amount to 7500", "label": "edit_expense"}
+{"text": "add income 800 Investment", "label": "add_income"}
+{"text": "total expenses this month", "label": "query"}
+{"text": "spent about 75000 on grab", "label": "add_expense"}
+{"text": "received Investment 10000", "label": "add_income"}
+{"text": "expense 120000 pharmacy", "label": "add_expense"}
+{"text": "Salary 750", "label": "add_income"}
+{"text": "spent 150000 on burger last week", "label": "add_expense"}
+{"text": "putting down 500 for bus", "label": "add_expense"}
+{"text": "Other 800", "label": "add_income"}
+{"text": "i got 60000 as Investment", "label": "add_income"}
+{"text": "450 for coffee", "label": "add_expense"}
+{"text": "spent rs 200 on haircut", "label": "add_expense"}
+{"text": "edit donation to 15000", "label": "edit_expense"}
+{"text": "add income 100 Investment", "label": "add_income"}
+{"text": "fix salary it was 2000", "label": "edit_income"}
+{"text": "deposited 35000", "label": "add_income"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "add income 3500 Bonus", "label": "add_income"}
+{"text": "modify the parking entry", "label": "edit_expense"}
+{"text": "sold design for 35000", "label": "add_income"}
+{"text": "add 150 for supermarket", "label": "add_expense"}
+{"text": "edit Salary income to 150000", "label": "edit_income"}
+{"text": "received payment 3000", "label": "add_income"}
+{"text": "earned 50 from Freelance", "label": "add_income"}
+{"text": "fuel tab was 120000", "label": "add_expense"}
+{"text": "expense summary", "label": "query"}
+{"text": "had grab for 1500", "label": "add_expense"}
+{"text": "made 35000 doing coding", "label": "add_income"}
+{"text": "got my Other of 1000", "label": "add_income"}
+{"text": "update last income", "label": "edit_income"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "food expenses this week", "label": "query"}
+{"text": "update the Internet expense to 20000", "label": "edit_expense"}
+{"text": "just paid 25000 for books", "label": "add_expense"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "change date of string hoppers to Jan 15", "label": "edit_expense"}
+{"text": "fix salary it was 20000", "label": "edit_income"}
+{"text": "Investment came in 10000", "label": "add_income"}
+{"text": "150000 income from Other", "label": "add_income"}
+{"text": "breakdown of my expenses", "label": "query"}
+{"text": "what's my total spending?", "label": "query"}
+{"text": "fix groceries it was 2000", "label": "edit_expense"}
+{"text": "correct last Internet", "label": "edit_expense"}
+{"text": "update Investment to 1500", "label": "edit_income"}
+{"text": "added 4000 income", "label": "add_income"}
+{"text": "lkr 400 for rice and curry", "label": "add_expense"}
+{"text": "just spent 6000 on medicine", "label": "add_expense"}
+{"text": "12000 on clothes", "label": "add_expense"}
+{"text": "change salary to 12000", "label": "edit_income"}
+{"text": "edit movie to 3500", "label": "edit_expense"}
+{"text": "800 Bonus received", "label": "add_income"}
+{"text": "edit expense supermarket", "label": "edit_expense"}
+{"text": "expense 600 string hoppers", "label": "add_expense"}
+{"text": "Salary gig got me 75000", "label": "add_income"}
+{"text": "edit my last income entry", "label": "edit_income"}
+{"text": "update my salary to 75000", "label": "edit_income"}
+{"text": "income was 800 not 80000", "label": "edit_income"}
+{"text": "had toll for 250", "label": "add_expense"}
+{"text": "daily average", "label": "query"}
+{"text": "income 50000 Gift", "label": "add_income"}
+{"text": "got 400 Salary", "label": "add_income"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "list all expenses", "label": "query"}
+{"text": "received my Gift 600", "label": "add_income"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "update burger amount to 120000", "label": "edit_expense"}
+{"text": "record 80000 for Internet", "label": "add_expense"}
+{"text": "50000 Gift received", "label": "add_income"}
+{"text": "spotify expense 500", "label": "add_expense"}
+{"text": "i got 750 as Other", "label": "add_income"}
+{"text": "average daily spending", "label": "query"}
+{"text": "when did I buy internet bill?", "label": "query"}
+{"text": "450 electricity bill", "label": "add_expense"}
+{"text": "how much did I spend yesterday?", "label": "query"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "change petrol category to Coffee", "label": "edit_expense"}
+{"text": "sold art piece for 80000", "label": "add_income"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "12000 on petrol", "label": "add_expense"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "show food expenses", "label": "query"}
+{"text": "edit expense books", "label": "edit_expense"}
+{"text": "spent rs 5000 on pizza", "label": "add_expense"}
+{"text": "edit Other income to 20000", "label": "edit_income"}
+{"text": "200 rupees for medicine", "label": "add_expense"}
+{"text": "clothes was 4000", "label": "add_expense"}
+{"text": "monthly summary", "label": "query"}
+{"text": "log 120000 phone bill", "label": "add_expense"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "my Investment is 35000", "label": "add_income"}
+{"text": "phone bill came to 40000", "label": "add_expense"}
+{"text": "got paid 1500 Jan 15", "label": "add_income"}
+{"text": "update the Entertainment expense to 250", "label": "edit_expense"}
+{"text": "correct last Shopping", "label": "edit_expense"}
+{"text": "total income", "label": "query"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "monthly summary", "label": "query"}
+{"text": "put 35000 down for parking", "label": "add_expense"}
+{"text": "spent 6000 on Rent", "label": "add_expense"}
+{"text": "earned 300", "label": "add_income"}
+{"text": "added 600 income", "label": "add_income"}
+{"text": "pizza expense 50000", "label": "add_expense"}
+{"text": "electricity bill came to 150000", "label": "add_expense"}
+{"text": "bought pharmacy for 800", "label": "add_expense"}
+{"text": "edit expense insurance", "label": "edit_expense"}
+{"text": "where does my money go?", "label": "query"}
+{"text": "clothes on Monday 100", "label": "add_expense"}
+{"text": "edit last Entertainment expense", "label": "edit_expense"}
+{"text": "recategorize uber as Health", "label": "edit_expense"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "show Internet expenses", "label": "query"}
+{"text": "edit gym membership to 4000", "label": "edit_expense"}
+{"text": "total spending on Fuel", "label": "query"}
+{"text": "change stationery to 1500", "label": "edit_expense"}
+{"text": "what's my total spending?", "label": "query"}
+{"text": "added 60000 income", "label": "add_income"}
+{"text": "Gift payment 10000", "label": "add_income"}
+{"text": "donation was actually 7500", "label": "edit_expense"}
+{"text": "modify coffee amount to 250", "label": "edit_expense"}
+{"text": "charged 150 for insurance", "label": "add_expense"}
+{"text": "400 rupees supermarket", "label": "add_expense"}
+{"text": "earned 300 from Freelance", "label": "add_income"}
+{"text": "received Other 150000", "label": "add_income"}
+{"text": "movie took 5000 from me", "label": "add_expense"}
+{"text": "monthly summary", "label": "query"}
+{"text": "donation cost 300", "label": "add_expense"}
+{"text": "Investment gig got me 450", "label": "add_income"}
+{"text": "change delivery to 40000", "label": "edit_expense"}
+{"text": "Other 500", "label": "add_income"}
+{"text": "cost me 3500 for train", "label": "add_expense"}
+{"text": "electricity bill should be 60000", "label": "edit_expense"}
+{"text": "fix the internet bill expense", "label": "edit_expense"}
+{"text": "what's my total spending?", "label": "query"}
+{"text": "change yesterday's pharmacy to 750", "label": "edit_expense"}
+{"text": "how much did I spend in March?", "label": "query"}
+{"text": "food expenses this week", "label": "query"}
+{"text": "cleared 200 from Freelance", "label": "add_income"}
+{"text": "change yesterday's rent to 450", "label": "edit_expense"}
+{"text": "change income category to Salary", "label": "edit_income"}
+{"text": "i spent 60000 on pizza", "label": "add_expense"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "when did I buy stationery?", "label": "query"}
+{"text": "spent 12000 for internet bill", "label": "add_expense"}
+{"text": "record 100000 for Water", "label": "add_expense"}
+{"text": "cost me 3000 for pizza", "label": "add_expense"}
+{"text": "cost me 3500 for phone bill", "label": "add_expense"}
+{"text": "got paid 3000", "label": "add_income"}
+{"text": "fix salary it was 1500", "label": "edit_income"}
+{"text": "received payment 7500", "label": "add_income"}
+{"text": "had fuel for 250", "label": "add_expense"}
+{"text": "change date of haircut to February 20", "label": "edit_expense"}
+{"text": "add expense 1000 Electricity", "label": "add_expense"}
+{"text": "350 on books", "label": "add_expense"}
+{"text": "netflix was actually 2500", "label": "edit_expense"}
+{"text": "doctor was 10000", "label": "add_expense"}
+{"text": "insurance last month 600", "label": "add_expense"}
+{"text": "what's my biggest expense?", "label": "query"}
+{"text": "cashed in 100 for Gift", "label": "add_income"}
+{"text": "received 50 Freelance February 20", "label": "add_income"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "add income 75000 Other", "label": "add_income"}
+{"text": "how much did I spend last week?", "label": "query"}
+{"text": "add 100000 for donation", "label": "add_expense"}
+{"text": "that burger was on earlier today not today", "label": "edit_expense"}
+{"text": "paycheck 60000", "label": "add_income"}
+{"text": "change burger category to Clothing", "label": "edit_expense"}
+{"text": "spending trend", "label": "query"}
+{"text": "i received 2500 Gift", "label": "add_income"}
+{"text": "internet bill bill 6000", "label": "add_expense"}
+{"text": "spent 100000 for pharmacy", "label": "add_expense"}
+{"text": "used 10000 for pharmacy", "label": "add_expense"}
+{"text": "how much did I spend in March?", "label": "query"}
+{"text": "show recent expenses", "label": "query"}
+{"text": "won 120000 from Salary", "label": "add_income"}
+{"text": "i received 8000 Freelance", "label": "add_income"}
+{"text": "120000 movie", "label": "add_expense"}
+{"text": "spent 5000 on rice and curry earlier today", "label": "add_expense"}
+{"text": "bought phone bill for 120000", "label": "add_expense"}
+{"text": "change yesterday's parking to 120000", "label": "edit_expense"}
+{"text": "how much on Other?", "label": "query"}
+{"text": "earned 3000", "label": "add_income"}
+{"text": "doctor should be 450", "label": "edit_expense"}
+{"text": "20000 rupees for burger", "label": "add_expense"}
+{"text": "weekly summary", "label": "query"}
+{"text": "that lunch was on this morning not today", "label": "edit_expense"}
+{"text": "got 100 from Other", "label": "add_income"}
+{"text": "rent was 3000", "label": "add_expense"}
+{"text": "change pharmacy category to Shopping", "label": "edit_expense"}
+{"text": "modify the stationery entry", "label": "edit_expense"}
+{"text": "had gas for 50", "label": "add_expense"}
+{"text": "blew 4000 on delivery", "label": "add_expense"}
+{"text": "450 rupees for pizza", "label": "add_expense"}
+{"text": "made 750 doing design", "label": "add_income"}
+{"text": "last 10 expenses", "label": "query"}
+{"text": "total income", "label": "query"}
+{"text": "how much income this month?", "label": "query"}
+{"text": "where does my money go?", "label": "query"}
+{"text": "got 450 Bonus", "label": "add_income"}
+{"text": "log 600 laundry", "label": "add_expense"}
+{"text": "bought donation for 6000", "label": "add_expense"}
+{"text": "show food expenses", "label": "query"}
+{"text": "salary should be 100000", "label": "edit_income"}
+{"text": "just paid 2000 for coffee", "label": "add_expense"}
+{"text": "bought books for 7500", "label": "add_expense"}
+{"text": "show Shopping expenses", "label": "query"}
+{"text": "search gifts", "label": "query"}
+{"text": "spent 3000 on Rent", "label": "add_expense"}
+{"text": "spent 7500 on string hoppers Jan 15", "label": "add_expense"}
+{"text": "used 120000 for restaurant", "label": "add_expense"}
+{"text": "spent 1500 on books last week", "label": "add_expense"}
+{"text": "100000 Electricity on Monday", "label": "add_expense"}
+{"text": "the shoes was 1200 not 1000", "label": "edit_expense"}
+{"text": "update Investment to 12000", "label": "edit_income"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "correct fuel to 60000", "label": "edit_expense"}
+{"text": "Gift payment 7500", "label": "add_income"}
+{"text": "edit my last income entry", "label": "edit_income"}
+{"text": "what are my top expenses?", "label": "query"}
+{"text": "average daily spending", "label": "query"}
+{"text": "salary should be 100", "label": "edit_income"}
+{"text": "update my last expense", "label": "edit_expense"}
+{"text": "how much did I spend on Rent?", "label": "query"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "recategorize income as Other", "label": "edit_income"}
+{"text": "modify movie amount to 600", "label": "edit_expense"}
+{"text": "spent about 100000 on fuel", "label": "add_expense"}
+{"text": "fix donation it was 150", "label": "edit_expense"}
+{"text": "got my Other of 250", "label": "add_income"}
+{"text": "received payment 100000", "label": "add_income"}
+{"text": "new expense 800 stationery", "label": "add_expense"}
+{"text": "that takeaway was on 3 days ago not today", "label": "edit_expense"}
+{"text": "earned 250", "label": "add_income"}
+{"text": "how much did I spend on Coffee?", "label": "query"}
+{"text": "shoes cost 30000", "label": "add_expense"}
+{"text": "lkr 150 for electricity bill", "label": "add_expense"}
+{"text": "spent about 35000 on uber", "label": "add_expense"}
+{"text": "got my Bonus of 1200", "label": "add_income"}
+{"text": "salary 50000", "label": "add_income"}
+{"text": "am I saving money?", "label": "query"}
+{"text": "lkr 2000 for takeaway", "label": "add_expense"}
+{"text": "last 10 expenses", "label": "query"}
+{"text": "find rent", "label": "query"}
+{"text": "got my Investment of 100", "label": "add_income"}
+{"text": "i spent 1000 on rice and curry", "label": "add_expense"}
+{"text": "spent rs 2500 on insurance", "label": "add_expense"}
+{"text": "insurance was actually 5000", "label": "edit_expense"}
+{"text": "update uber amount to 10000", "label": "edit_expense"}
+{"text": "show Other expenses", "label": "query"}
+{"text": "total spending on Bills", "label": "query"}
+{"text": "change snacks category to Lunch", "label": "edit_expense"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "how much did I spend today?", "label": "query"}
+{"text": "change the amount of burger to 50000", "label": "edit_expense"}
+{"text": "edit Freelance income to 10000", "label": "edit_income"}
+{"text": "am I saving money?", "label": "query"}
+{"text": "update the Bills expense to 20000", "label": "edit_expense"}
+{"text": "move Investment income to Investment", "label": "edit_income"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "add 12000 for insurance", "label": "add_expense"}
+{"text": "log 5000 petrol", "label": "add_expense"}
+{"text": "expense summary", "label": "query"}
+{"text": "spent rs 800 on bus", "label": "add_expense"}
+{"text": "made 800 doing coding", "label": "add_income"}
+{"text": "charged 1000 for doctor", "label": "add_expense"}
+{"text": "how much did I earn this month?", "label": "query"}
+{"text": "recategorize pizza as Health", "label": "edit_expense"}
+{"text": "that pharmacy was on March 5 not today", "label": "edit_expense"}
+{"text": "how much do I have left?", "label": "query"}
+{"text": "show my spending", "label": "query"}
+{"text": "got 35000 from Freelance", "label": "add_income"}
+{"text": "1000 for pizza", "label": "add_expense"}
+{"text": "modify the snacks entry", "label": "edit_expense"}
+{"text": "gifts was actually 450", "label": "edit_expense"}
+{"text": "dropped 600 on donation", "label": "add_expense"}
+{"text": "spending summary", "label": "query"}
+{"text": "how much did I spend this week?", "label": "query"}
+{"text": "i got 500 as Bonus", "label": "add_income"}
+{"text": "the Freelance was 30000", "label": "edit_income"}
+{"text": "uber expense 35000", "label": "add_expense"}
+{"text": "correct lunch to 30000", "label": "edit_expense"}
+{"text": "20000 income from Gift", "label": "add_income"}
+{"text": "Bonus payment 500", "label": "add_income"}
+{"text": "paycheck 35000", "label": "add_income"}
+{"text": "total income", "label": "query"}
+{"text": "dentist cost 3000", "label": "add_expense"}
+{"text": "spent rs. 120000 for train", "label": "add_expense"}
+{"text": "change the amount of electricity bill to 400", "label": "edit_expense"}
+{"text": "average daily spending", "label": "query"}
+{"text": "record 75000 for Internet", "label": "add_expense"}
+{"text": "i got 400 as Gift", "label": "add_income"}
+{"text": "salary should be 35000", "label": "edit_income"}
+{"text": "putting down 75000 for gas", "label": "add_expense"}
+{"text": "spent about 35000 on uber", "label": "add_expense"}
+{"text": "bought movie for 1500", "label": "add_expense"}
+{"text": "lkr 1500 for bus", "label": "add_expense"}
+{"text": "train should be 100000", "label": "edit_expense"}
+{"text": "last 10 expenses", "label": "query"}
+{"text": "how much left from salary?", "label": "query"}
+{"text": "sold art piece for 120000", "label": "add_income"}
+{"text": "400 rupees for toll", "label": "add_expense"}
+{"text": "edit insurance to 120000", "label": "edit_expense"}
+{"text": "show Groceries expenses", "label": "query"}
+{"text": "received 40000 Salary last month", "label": "add_income"}
+{"text": "change Clothing from February 20 to 75000", "label": "edit_expense"}
+{"text": "change income category to Freelance", "label": "edit_income"}
+{"text": "received 2500 Gift March 5", "label": "add_income"}
+{"text": "change yesterday's restaurant to 600", "label": "edit_expense"}
+{"text": "bus cost 100000", "label": "add_expense"}
+{"text": "expense summary", "label": "query"}
+{"text": "spent 150000 for medicine", "label": "add_expense"}
+{"text": "update my last expense", "label": "edit_expense"}
+{"text": "entertainment spending", "label": "query"}
+{"text": "edit last Clothing expense", "label": "edit_expense"}
+{"text": "change salary to 450", "label": "edit_income"}
+{"text": "the burger was 40000 not 350", "label": "edit_expense"}
+{"text": "delivery cost 2500", "label": "add_expense"}
+{"text": "donation cost 300", "label": "add_expense"}
+{"text": "received my Freelance 150000", "label": "add_income"}
+{"text": "deposited 500", "label": "add_income"}
+{"text": "250 Gym last month", "label": "add_expense"}
+{"text": "how much on transport?", "label": "query"}
+{"text": "sold old phone for 450", "label": "add_income"}
+{"text": "cashed in 40000 for Bonus", "label": "add_income"}
+{"text": "just paid 150 for pharmacy", "label": "add_expense"}
+{"text": "120000 doctor", "label": "add_expense"}
+{"text": "cost me 2000 for spotify", "label": "add_expense"}
+{"text": "medicine came to 800", "label": "add_expense"}
+{"text": "6000 from Bonus gig", "label": "add_income"}
+{"text": "show food expenses", "label": "query"}
+{"text": "pharmacy came to 3500", "label": "add_expense"}
+{"text": "correct last Other", "label": "edit_expense"}
+{"text": "put 15000 down for petrol", "label": "add_expense"}
+{"text": "blew 800 on breakfast", "label": "add_expense"}
+{"text": "got paid 12000", "label": "add_income"}
+{"text": "earned 7500", "label": "add_income"}
+{"text": "edit last Water expense", "label": "edit_expense"}
+{"text": "where does my money go?", "label": "query"}
+{"text": "got a Investment of 150", "label": "add_income"}
+{"text": "250 Gift received", "label": "add_income"}
+{"text": "how much did I spend this month?", "label": "query"}
+{"text": "how much have I spent?", "label": "query"}
+{"text": "taxi 60000", "label": "add_expense"}
+{"text": "i spent 15000 on shoes", "label": "add_expense"}
+{"text": "edit my last income entry", "label": "edit_income"}
+{"text": "how much was phone bill?", "label": "query"}
+{"text": "received payment 60000", "label": "add_income"}
+{"text": "paid 1000 for toll on Friday", "label": "add_expense"}
+{"text": "putting down 35000 for dinner", "label": "add_expense"}
+{"text": "120000 Other received", "label": "add_income"}
+{"text": "my Bonus is 100000", "label": "add_income"}
+{"text": "log 8000 shoes", "label": "add_expense"}
+{"text": "paid 5000 for insurance", "label": "add_expense"}
+{"text": "my Gift is 40000", "label": "add_income"}
+{"text": "add expense 800 Shopping", "label": "add_expense"}
+{"text": "cost me 75000 for netflix", "label": "add_expense"}
+{"text": "Bonus 20000", "label": "add_income"}
+{"text": "show me my expenses", "label": "query"}
+{"text": "what's my biggest category?", "label": "query"}
+{"text": "search laundry", "label": "query"}
+{"text": "blew 800 on breakfast", "label": "add_expense"}
+{"text": "rent was actually 6000", "label": "edit_expense"}

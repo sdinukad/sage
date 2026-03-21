@@ -112,33 +112,21 @@ export default function ChatPage() {
         }),
       });
 
-      if (!res.body) throw new Error('No readable stream from API');
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let rawJson = '';
-      
-      const msgId = Math.random().toString(36).substring(7);
-      setMessages((prev) => [...prev, { id: msgId, type: 'assistant', content: '' }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        rawJson += decoder.decode(value, { stream: true });
-        
-        const match = rawJson.match(/"answer"\s*:\s*"([\s\S]*?)(?:",\s*"actions"|$)/);
-        if (match) {
-            const partialAnswer = match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content: partialAnswer } : m));
-        }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
       }
 
-      // Stream fully completed, parse the compiled payload
-      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '');
-      const data: ChatResponse = JSON.parse(cleanJson);
+      const data: ChatResponse = await res.json();
       
-      // Ensure the exact final answer text and actions are committed
-      setMessages((prev) => prev.map(m => m.id === msgId ? { ...m, content: data.answer, actions: data.actions || [], resolvedActions: [] } : m));
+      const msgId = Math.random().toString(36).substring(7);
+      setMessages((prev) => [...prev, { 
+        id: msgId, 
+        type: 'assistant', 
+        content: data.answer, 
+        actions: data.actions || [], 
+        resolvedActions: [] 
+      }]);
 
     } catch (e) {
       console.error(e);

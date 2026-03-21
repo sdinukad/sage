@@ -1,7 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Category, Expense, ChatResponse, Income, ChatAction } from './models';
 
-const MODEL_NAME = 'gemini-3-flash-preview';
+const MODELS = [
+    'gemma-3-27b-it', // Primary (Instruction Tuned)
+    'gemma-3-12b-it', 
+    'gemma-3-4b-it',  
+    'gemma-3-1b-it',
+    'gemini-2.0-flash' // Safe ultimate fallback
+];
 
 // Initialize the SDK
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -12,35 +18,46 @@ interface GeminiResponse {
 }
 
 async function callGemini(prompt: string): Promise<GeminiResponse> {
-    try {
-        console.log('Calling Gemini SDK...');
-        const model = genAI.getGenerativeModel({ 
-            model: MODEL_NAME,
-            generationConfig: { responseMimeType: "application/json" }
-        });
-        
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        console.log('Gemini raw text received (first 100 chars):', text.substring(0, 100));
+    let lastError: any;
 
+    for (const modelName of MODELS) {
         try {
-            return JSON.parse(text) as GeminiResponse;
-        } catch (e) {
-            console.warn('JSON.parse failed, trying regex match', e);
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try {
-                    return JSON.parse(jsonMatch[0]) as GeminiResponse;
-                } catch (innerE) {
-                    console.error('Regex JSON match parse failed', innerE);
+            console.log(`Calling Gemini SDK with model: ${modelName}...`);
+            const model = genAI.getGenerativeModel({ 
+                model: modelName,
+                generationConfig: { responseMimeType: "application/json" }
+            });
+            
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().trim();
+            console.log(`Gemini raw text received from ${modelName} (first 100 chars):`, text.substring(0, 100));
+
+            try {
+                return JSON.parse(text) as GeminiResponse;
+            } catch (e) {
+                console.warn(`JSON.parse failed for ${modelName}, trying regex match`, e);
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        return JSON.parse(jsonMatch[0]) as GeminiResponse;
+                    } catch (innerE) {
+                        console.error(`Regex JSON match parse failed for ${modelName}`, innerE);
+                    }
                 }
+                // If it's just text, treat it as the answer
+                return { answer: text, actions: [] };
             }
-            return { answer: text, actions: [] };
+        } catch (err: any) {
+            console.error(`Error with model ${modelName}:`, err?.message || err);
+            lastError = err;
+            // Continue to next model in loop
+            continue;
         }
-    } catch (err: unknown) {
-        console.error('Error in callGemini with SDK:', err);
-        throw err;
     }
+
+    // If we get here, all models failed
+    console.error('All models failed in callGemini.');
+    throw lastError || new Error('All models failed');
 }
 
 // categoriseExpense removed as it was hardcoded and is now superseded by dynamic categories.
@@ -154,23 +171,47 @@ export async function processSageChatStream(
     Incomes: ${JSON.stringify(incomes)}
     User Message: ${message}`;
 
-    const model = genAI.getGenerativeModel({ 
-        model: MODEL_NAME
-    });
-    
-    const result = await model.generateContentStream(prompt);
-    
-    const encoder = new TextEncoder();
-    return new ReadableStream({
-        async start(controller) {
-            try {
-                for await (const chunk of result.stream) {
-                    controller.enqueue(encoder.encode(chunk.text()));
+    let lastError: any;
+
+    for (const modelName of MODELS) {
+        try {
+            console.log(`Attempting streaming with model: ${modelName}...`);
+            const model = genAI.getGenerativeModel({ 
+                model: modelName
+            });
+            
+            const result = await model.generateContentStream(prompt);
+            
+            // If we successfully get the result object, we can start the stream
+            // Note: The actual streaming errors happen inside the for-await loop, 
+            // but the initial connection/demand check happens here.
+            
+            const encoder = new TextEncoder();
+            return new ReadableStream({
+                async start(controller) {
+                    try {
+                        for await (const chunk of result.stream) {
+                            controller.enqueue(encoder.encode(chunk.text()));
+                        }
+                        controller.close();
+                    } catch (err) {
+                        console.error(`Streaming error during iteration with ${modelName}:`, err);
+                        // We can't easily fallback once the stream has started sending data to the client,
+                        // but we can at least log it.
+                        controller.error(err);
+                    }
                 }
-                controller.close();
-            } catch (err) {
-                controller.error(err);
+            });
+        } catch (err: any) {
+            console.error(`Failed to start stream with model ${modelName}:`, err?.message || err);
+            lastError = err;
+            // Only fallback if it's a transient error or not found
+            if (err?.status === 503 || err?.status === 429 || err?.status === 404) {
+                continue;
             }
+            throw err; // For other errors, fail fast
         }
-    });
+    }
+
+    throw lastError || new Error('All models failed to start streaming');
 }

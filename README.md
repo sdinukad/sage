@@ -1,43 +1,48 @@
-# Sage
+# Sage - AI-Powered Expense Tracker
 
-Multi-platform AI expense tracker.
+Sage is a modern, conversation-centric personal finance assistant. By combining local BERT-Tiny intelligence with cloud-based Gemini logic and Supabase infrastructure, Sage provides an effortless way to track your spending.
 
-## Project Structure
+## Documentation Index
 
-- `web/`: Next.js web application.
-- `shared/`: Shared TypeScript models and Gemini AI helpers.
+We have created detailed documentation to help you get started, understand the architecture, and use Sage effectively.
 
+### For Everyone
+-   **[Introduction](docs/introduction.md)**: What is Sage and why we built it.
+-   **[User Guide](docs/user-guide.md)**: A non-technical guide on how to interact with the AI assistant.
+-   **[UI/UX Handoff](docs/ui-ux-handoff.md)**: A guide for designers to customize the look and feel.
 
-## Setup & Database
+### For Developers
+-   **[Getting Started](docs/getting-started.md)**: Step-by-step setup instructions for your local environment.
+-   **[System Architecture](docs/architecture.md)**: Technical overview, data flow, and Mermaid diagrams.
+-   **[Local AI Engine](docs/local-ai-engine.md)**: Deep dive into the fine-tuned BERT-Tiny model.
+-   **[Local AI Guide](docs/local-ai-guide.md)**: Additional technical details on the AI training and integration.
+-   **[Design System](docs/design-system.md)**: Visual identity, color palette, and component library.
+-   **[Design Handoff](docs/design-handoff.md)**: Technical redesign notes and component implementation.
+-   **[Development Guide](docs/development-guide.md)**: Project structure and coding standards.
 
-### Supabase Details
-- **Project URL:** `https://your-project.supabase.co`
-- **Publishable Key:** `your-anon-key`
+## Tech Stack
 
-### Database Schema
-```sql
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2) NOT NULL,
-  category TEXT NOT NULL CHECK (category IN (
-    'Food','Transport','Bills','Entertainment','Health','Shopping','Other'
-  )),
-  note TEXT DEFAULT '',
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-   **Frontend**: Next.js, Tailwind CSS, ONNX Runtime Web.
+-   **Backend**: Supabase (PostgreSQL, RLS, Auth).
+-   **AI**: BERT-Tiny (Local, ONNX).
+-   **Shared Logic**: TypeScript.
 
-CREATE TABLE incomes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  amount NUMERIC(10,2) NOT NULL,
-  category TEXT NOT NULL CHECK (category IN (
-    'Salary','Bonus','Investment','Gift','Other'
-  )),
-  note TEXT DEFAULT '',
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+---
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/dinuka/sage.git
+
+# Navigate to web
+cd web
+npm install
+npm run dev
 ```
 
+For detailed instructions, see the **[Getting Started Guide](docs/getting-started.md)**.
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.

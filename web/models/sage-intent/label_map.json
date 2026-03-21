@@ -1,0 +1,16 @@
+{
+  "label2id": {
+    "add_expense": 0,
+    "add_income": 1,
+    "edit_expense": 2,
+    "edit_income": 3,
+    "query": 4
+  },
+  "id2label": {
+    "0": "add_expense",
+    "1": "add_income",
+    "2": "edit_expense",
+    "3": "edit_income",
+    "4": "query"
+  }
+}
