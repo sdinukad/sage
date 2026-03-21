@@ -6,9 +6,11 @@ Sage is a modern, conversation-centric personal finance assistant. By combining 
 
 We have created detailed documentation to help you get started, understand the architecture, and use Sage effectively.
 
-### For Everyone
+### For Everything
 -   **[Introduction](docs/introduction.md)**: What is Sage and why we built it.
 -   **[User Guide](docs/user-guide.md)**: A non-technical guide on how to interact with the AI assistant.
+-   **[Hosting Recommendations](docs/hosting-recommendations.md)**: Best places to host Sage for testing.
+-   **[Supabase & Migrations](docs/supabase-guide.md)**: Understanding your backend infrastructure.
 -   **[UI/UX Handoff](docs/ui-ux-handoff.md)**: A guide for designers to customize the look and feel.
 
 ### For Developers
