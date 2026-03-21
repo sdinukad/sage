@@ -32,13 +32,14 @@ export default function RegisterPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      router.push('/dashboard');
+    }
+    if (!error) {
+      router.push('/chat');
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-container max-w-md mx-auto relative overflow-hidden">
+    <div className="flex flex-col min-h-dvh bg-surface-container max-w-md mx-auto relative overflow-hidden">
       {/* Top Panel (35%) */}
       <div className="h-[35vh] flex flex-col items-center justify-center text-center px-6">
         <h1 className="font-serif text-[44px] text-white leading-none mb-2">Sage</h1>

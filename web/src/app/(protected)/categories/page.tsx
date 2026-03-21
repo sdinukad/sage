@@ -24,7 +24,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-dvh bg-background">
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 h-[64px] flex items-center gap-4 border-b border-border">
         <Link href="/dashboard" className="p-2 -ml-2 text-on-surface-variant hover:text-on-surface">
           <ArrowLeft size={20} />

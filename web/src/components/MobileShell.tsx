@@ -70,7 +70,7 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
 
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative shadow-xl">
+    <div className="min-h-dvh bg-background flex flex-col max-w-md mx-auto relative shadow-xl">
       {/* Sticky Header */}
       <header className="sticky-header sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 flex items-center justify-between">
         <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
@@ -95,7 +95,7 @@ const MobileShell: React.FC<MobileShellProps> = ({ children }) => {
       {/* FAB */}
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] right-5 w-14 h-14 rounded-full flex items-center justify-center text-on-primary z-40 active:scale-90 transition-transform duration-200"
+        className="hidden fixed bottom-[calc(72px+env(safe-area-inset-bottom))] right-5 w-14 h-14 rounded-full flex items-center justify-center text-on-primary z-40 active:scale-90 transition-transform duration-200"
         style={{
           background: 'linear-gradient(135deg, var(--primary) 0%, var(--on-primary-container) 100%)',
           boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'

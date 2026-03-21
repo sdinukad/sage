@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/chat', request.url));
   }
 
   return response;

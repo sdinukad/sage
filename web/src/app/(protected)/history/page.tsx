@@ -83,7 +83,7 @@ export default function HistoryPage() {
   }, [filteredData]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-dvh bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 h-[64px] flex items-center justify-between border-b border-border">
         <h1 className="font-serif text-[24px] font-semibold text-on-surface">History</h1>
