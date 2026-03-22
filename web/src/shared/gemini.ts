@@ -1,12 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Expense, ChatResponse, Income, ChatAction } from './models';
+import { Expense, ChatResponse, Income, ChatAction, AICategory } from './models';
 
 const MODELS = [
-    'gemma-3-27b-it', // Primary (Instruction Tuned)
+    'gemini-3.1-flash-lite-preview', // Fastest & Primary
+    'gemini-2.5-flash',              // Secondary robust fallback
+    'gemma-3-27b-it',                // Free tier exhausted
     'gemma-3-12b-it', 
     'gemma-3-4b-it',  
     'gemma-3-1b-it',
-    'gemini-2.0-flash' // Safe ultimate fallback
 ];
 
 // Initialize the SDK
@@ -24,8 +25,7 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
         try {
             console.log(`Calling Gemini SDK with model: ${modelName}...`);
             const model = genAI.getGenerativeModel({ 
-                model: modelName,
-                generationConfig: { responseMimeType: "application/json" }
+                model: modelName
             });
             
             const result = await model.generateContent(prompt);
@@ -66,12 +66,16 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
 export async function processSageChat(
     message: string,
     expenses: Expense[],
-    expenseCategories: string[] = [],
-    incomeCategories: string[] = [],
+    expenseCategories: AICategory[] = [],
+    incomeCategories: AICategory[] = [],
     incomes: Income[] = []
 ): Promise<ChatResponse> {
-    const expCats = expenseCategories.length > 0 ? expenseCategories.join(', ') : 'Food, Transport, Bills, Entertainment, Health, Shopping, Other';
-    const incCats = incomeCategories.length > 0 ? incomeCategories.join(', ') : 'Salary, Bonus, Investment, Gift, Other';
+    const buildCatString = (cats: AICategory[], fallback: string) => {
+        if (cats.length === 0) return fallback;
+        return cats.map(c => c.hints ? `${c.name} (Hints: ${c.hints})` : c.name).join(', ');
+    };
+    const expCats = buildCatString(expenseCategories, 'Food, Transport, Bills, Entertainment, Health, Shopping, Other');
+    const incCats = buildCatString(incomeCategories, 'Salary, Bonus, Investment, Gift, Other');
 
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
@@ -128,12 +132,16 @@ export async function processSageChat(
 export async function processSageChatStream(
     message: string,
     expenses: Expense[],
-    expenseCategories: string[] = [],
-    incomeCategories: string[] = [],
+    expenseCategories: AICategory[] = [],
+    incomeCategories: AICategory[] = [],
     incomes: Income[] = []
 ): Promise<ReadableStream> {
-    const expCats = expenseCategories.length > 0 ? expenseCategories.join(', ') : 'Food, Transport, Bills, Entertainment, Health, Shopping, Other';
-    const incCats = incomeCategories.length > 0 ? incomeCategories.join(', ') : 'Salary, Bonus, Investment, Gift, Other';
+    const buildCatString = (cats: AICategory[], fallback: string) => {
+        if (cats.length === 0) return fallback;
+        return cats.map(c => c.hints ? `${c.name} (Hints: ${c.hints})` : c.name).join(', ');
+    };
+    const expCats = buildCatString(expenseCategories, 'Food, Transport, Bills, Entertainment, Health, Shopping, Other');
+    const incCats = buildCatString(incomeCategories, 'Salary, Bonus, Investment, Gift, Other');
 
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 

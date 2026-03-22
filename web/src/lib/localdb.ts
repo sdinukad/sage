@@ -17,6 +17,7 @@ export interface LocalCategory {
   name: string;
   type: 'expense' | 'income';
   color?: string;
+  ai_hints?: string;
   sync_status: SyncStatus;
 }
 

@@ -24,7 +24,7 @@ interface ExpenseDataContextType {
   loading: boolean;
   hasFetched: boolean;
   refreshData: () => Promise<void>;
-  addCategory: (name: string, type: 'expense' | 'income', color?: string) => Promise<void>;
+  addCategory: (name: string, type: 'expense' | 'income', color?: string, ai_hints?: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 }
 
@@ -86,11 +86,11 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
       const currentCats = await db.categories.count();
       if (currentCats === 0) {
         const defaults: Omit<LocalCategory, 'sync_status'>[] = [
-          { id: crypto.randomUUID(), user_id: user.id, name: 'Food', type: 'expense', color: '#ff9f43' },
-          { id: crypto.randomUUID(), user_id: user.id, name: 'Transport', type: 'expense', color: '#54a0ff' },
-          { id: crypto.randomUUID(), user_id: user.id, name: 'Bills', type: 'expense', color: '#ee5253' },
-          { id: crypto.randomUUID(), user_id: user.id, name: 'Salary', type: 'income', color: '#4a7c59' },
-          { id: crypto.randomUUID(), user_id: user.id, name: 'Other', type: 'expense', color: '#8395a7' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Food', type: 'expense', color: '#ff9f43', ai_hints: 'food, lunch, dinner, breakfast, restaurant, takeaway, delivery, pizza, burger, rice, kottu, string hoppers, snacks, coffee, cafe, meal, eat' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Transport', type: 'expense', color: '#54a0ff', ai_hints: 'uber, grab, taxi, bus, train, fuel, petrol, gas, parking, toll, transport, ride, commute, drive' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Bills', type: 'expense', color: '#ee5253', ai_hints: 'bill, electricity, water, internet, phone, rent, insurance, subscription, netflix, spotify' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Salary', type: 'income', color: '#4a7c59', ai_hints: 'salary, pay, paycheck, wage, income' },
+          { id: crypto.randomUUID(), user_id: user.id, name: 'Other', type: 'expense', color: '#8395a7', ai_hints: 'miscellaneous, unknown, other' },
         ];
         for (const cat of defaults) {
           await syncAddCategory(cat);
@@ -113,14 +113,15 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     }
   }, [user, fetchSupabaseBackground]);
 
-  const addCategory = useCallback(async (name: string, type: 'expense' | 'income', color?: string) => {
+  const addCategory = useCallback(async (name: string, type: 'expense' | 'income', color?: string, ai_hints?: string) => {
     if (!user) return;
     await syncAddCategory({
       id: crypto.randomUUID(),
       user_id: user.id,
       name,
       type,
-      color: color || '#8395a7'
+      color: color || '#8395a7',
+      ai_hints
     });
   }, [user]);
 

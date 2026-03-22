@@ -1,4 +1,5 @@
 export type Category = string;
+export interface AICategory { name: string; hints?: string; }
 
 export interface Expense {
   id: string;
@@ -40,4 +41,5 @@ export interface ChatAction {
 export interface ChatResponse {
   answer: string;
   actions: ChatAction[];
+  confidence?: number;
 }

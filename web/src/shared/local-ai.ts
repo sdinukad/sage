@@ -14,6 +14,8 @@ import { ChatResponse, ChatAction, Expense, Income } from './models';
 import * as ort from 'onnxruntime-node';
 import * as fs from 'fs';
 import * as path from 'path';
+import { wordsToNumbers } from 'words-to-numbers';
+import { AICategory } from './models';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -171,25 +173,34 @@ async function classifyIntent(text: string): Promise<{ intent: IntentLabel; conf
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function toLocalDateString(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ---------------------------------------------------------------------------
 // Entity Extraction (Regex-based)
 // ---------------------------------------------------------------------------
 
 function extractEntities(
-    text: string,
-    expenseCategories: string[] = [],
-    incomeCategories: string[] = []
+    message: string,
+    expenseCategories: AICategory[] = [],
+    incomeCategories: AICategory[] = []
 ): ExtractedEntities {
     const entities: ExtractedEntities = {};
 
     // Amount extraction — match numbers with optional currency prefixes and "k" suffix
-    const amountPattern = /(?:rs\.?\s*|lkr\s*|₨\s*)?(\d[\d,]*(?:\.\d{1,2})?)\s*(k\b|rupees?|rs|lkr|bucks?)?/gi;
-    const match = amountPattern.exec(text);
+    // Negative lookahead prevents matching dates like "15th" or "15 march"
+    const amountPattern = /(?:rs\.?\s*|lkr\s*|₨\s*)?\b(\d[\d,]*(?:\.\d{1,2})?)(?!\d)\s*(k\b|rupees?|rs|lkr|bucks?)?(?!\s*,?\s*(?:st|nd|rd|th|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b)/gi;
+    const match = amountPattern.exec(message);
     if (match) {
         let amount = parseFloat(match[1].replace(/,/g, ''));
         const suffix = (match[2] || '').toLowerCase();
         if (suffix === 'k') {
             amount *= 1000;
-        } else if (!suffix && text.slice(match.index + match[0].length).trim().toLowerCase().startsWith('k')) {
+        } else if (!suffix && message.slice(match.index + match[0].length).trim().toLowerCase().startsWith('k')) {
             // Handle edge cases where "k" wasn't caught in group 2
             amount *= 1000;
         }
@@ -199,33 +210,33 @@ function extractEntities(
     // Date extraction
     const now = new Date();
     const datePatterns: [RegExp, () => string][] = [
-        [/\btoday\b/i, () => now.toISOString().split('T')[0]],
+        [/\btoday\b/i, () => toLocalDateString(now)],
         [/\byesterday\b/i, () => {
             const d = new Date(now);
             d.setDate(d.getDate() - 1);
-            return d.toISOString().split('T')[0];
+            return toLocalDateString(d);
         }],
         [/\b(\d+)\s*days?\s*ago\b/i, () => {
-            const m = text.match(/(\d+)\s*days?\s*ago/i);
+            const m = message.match(/(\d+)\s*days?\s*ago/i);
             const d = new Date(now);
             d.setDate(d.getDate() - parseInt(m![1]));
-            return d.toISOString().split('T')[0];
+            return toLocalDateString(d);
         }],
         [/\blast\s*week\b/i, () => {
             const d = new Date(now);
             d.setDate(d.getDate() - 7);
-            return d.toISOString().split('T')[0];
+            return toLocalDateString(d);
         }],
-        [/\bthis\s*morning\b/i, () => now.toISOString().split('T')[0]],
-        [/\bearlier\s*today\b/i, () => now.toISOString().split('T')[0]],
+        [/\bthis\s*morning\b/i, () => toLocalDateString(now)],
+        [/\bearlier\s*today\b/i, () => toLocalDateString(now)],
         [/\bon\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i, () => {
             const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-            const m = text.match(/on\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
+            const m = message.match(/on\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
             const targetDay = dayNames.indexOf(m![1].toLowerCase());
             const d = new Date(now);
             const diff = (d.getDay() - targetDay + 7) % 7 || 7;
             d.setDate(d.getDate() - diff);
-            return d.toISOString().split('T')[0];
+            return toLocalDateString(d);
         }],
         [/\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}\b/i, () => {
             const monthNames: Record<string, number> = {
@@ -234,49 +245,65 @@ function extractEntities(
                 aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
                 nov: 10, november: 10, dec: 11, december: 11,
             };
-            const m = text.match(/(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})/i);
+            const m = message.match(/(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})/i);
             if (m) {
                 const month = monthNames[m[1].toLowerCase()];
                 const day = parseInt(m[2]);
                 const d = new Date(now.getFullYear(), month, day);
-                return d.toISOString().split('T')[0];
+                return toLocalDateString(d);
             }
-            return now.toISOString().split('T')[0];
+            return toLocalDateString(now);
         }],
         [/\bon\s*the\s*(\d{1,2})(?:st|nd|rd|th)?\b/i, () => {
-            const m = text.match(/on\s*the\s*(\d{1,2})/i);
+            const m = message.match(/on\s*the\s*(\d{1,2})/i);
             const d = new Date(now.getFullYear(), now.getMonth(), parseInt(m![1]));
-            return d.toISOString().split('T')[0];
+            return toLocalDateString(d);
+        }],
+        [/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i, () => {
+            const monthNames: Record<string, number> = {
+                jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+                apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+                aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
+                nov: 10, november: 10, dec: 11, december: 11,
+            };
+            const m = message.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i);
+            if (m) {
+                const day = parseInt(m[1]);
+                const month = monthNames[m[2].toLowerCase()];
+                const d = new Date(now.getFullYear(), month, day);
+                return toLocalDateString(d);
+            }
+            return toLocalDateString(now);
         }],
     ];
 
     for (const [pattern, dateGen] of datePatterns) {
-        if (pattern.test(text)) {
+        if (pattern.test(message)) {
             entities.date = dateGen();
             break;
         }
     }
 
     if (!entities.date) {
-        entities.date = now.toISOString().split('T')[0];
+        entities.date = toLocalDateString(now);
     }
 
     // Category extraction — fuzzy match against user's categories
     const allCategories = [...expenseCategories, ...incomeCategories];
     const defaultExpenseCategories = ['Food', 'Transport', 'Bills', 'Entertainment', 'Health', 'Shopping', 'Other'];
     const defaultIncomeCategories = ['Salary', 'Bonus', 'Investment', 'Gift', 'Freelance', 'Other'];
-    const searchCategories = allCategories.length > 0 ? allCategories : [...defaultExpenseCategories, ...defaultIncomeCategories];
+    const searchCategories = allCategories.length > 0 ? allCategories.map(c => c.name) : [...defaultExpenseCategories, ...defaultIncomeCategories];
 
-    const textLower = text.toLowerCase();
+    const messageLower = message.toLowerCase();
     for (const cat of searchCategories) {
-        if (textLower.includes(cat.toLowerCase())) {
+        if (messageLower.includes(cat.toLowerCase())) {
             entities.category = cat;
             break;
         }
     }
 
     // Note extraction — whatever's left after removing amount, date, category
-    let noteText = text;
+    let noteText = message;
     // Remove amounts
     noteText = noteText.replace(/(?:rs\.?\s*|lkr\s*|₨\s*)?\d[\d,]*(?:\.\d{1,2})?\s*(?:rupees?|rs|lkr|bucks?|k\b)?/gi, '');
     // Remove date references
@@ -299,31 +326,40 @@ function extractEntities(
 }
 
 // ---------------------------------------------------------------------------
-// Category Classification (simple keyword matching)
+// Category Classification (Dynamic Hint Matching)
 // ---------------------------------------------------------------------------
 
-const CATEGORY_KEYWORDS: Record<string, string[]> = {
-    'Food': ['food', 'lunch', 'dinner', 'breakfast', 'restaurant', 'takeaway', 'delivery', 'pizza', 'burger', 'rice', 'kottu', 'string hoppers', 'snacks', 'coffee', 'cafe', 'meal', 'eat'],
-    'Transport': ['uber', 'grab', 'taxi', 'bus', 'train', 'fuel', 'petrol', 'gas', 'parking', 'toll', 'transport', 'ride', 'commute', 'drive'],
-    'Bills': ['bill', 'electricity', 'water', 'internet', 'phone', 'rent', 'insurance', 'subscription', 'netflix', 'spotify'],
-    'Entertainment': ['movie', 'cinema', 'game', 'gaming', 'concert', 'party', 'outing', 'entertainment', 'fun'],
-    'Health': ['doctor', 'dentist', 'pharmacy', 'medicine', 'hospital', 'clinic', 'gym', 'health', 'medical'],
-    'Shopping': ['clothes', 'shoes', 'clothing', 'shop', 'mall', 'amazon', 'online', 'purchase', 'buy', 'bought'],
-    'Groceries': ['grocery', 'groceries', 'supermarket', 'vegetables', 'fruits', 'market'],
-};
-
-export function classifyCategory(text: string, userCategories: string[] = []): string {
+export function classifyCategory(text: string, userCategories: AICategory[] = []): string {
     const textLower = text.toLowerCase();
 
-    // First check user's custom categories
-    for (const cat of userCategories) {
+    // Dynamically build keywords from user's custom hints
+    const categoryKeywords: Record<string, string[]> = {};
+    
+    if (userCategories.length > 0) {
+        userCategories.forEach(c => {
+            const hints = c.hints ? c.hints.toLowerCase().split(',').map(s => s.trim()) : [];
+            categoryKeywords[c.name] = [...hints, c.name.toLowerCase()];
+        });
+    } else {
+        // Fallback backward compatibility map
+        categoryKeywords['Food'] = ['food', 'lunch', 'dinner', 'breakfast', 'restaurant', 'takeaway', 'delivery', 'pizza', 'burger', 'rice', 'kottu', 'string hoppers', 'snacks', 'coffee', 'cafe', 'meal', 'eat'];
+        categoryKeywords['Transport'] = ['uber', 'grab', 'taxi', 'bus', 'train', 'fuel', 'petrol', 'gas', 'parking', 'toll', 'transport', 'ride', 'commute', 'drive'];
+        categoryKeywords['Bills'] = ['bill', 'electricity', 'water', 'internet', 'phone', 'rent', 'insurance', 'subscription', 'netflix', 'spotify'];
+        categoryKeywords['Entertainment'] = ['movie', 'cinema', 'game', 'gaming', 'concert', 'party', 'outing', 'entertainment', 'fun'];
+        categoryKeywords['Health'] = ['doctor', 'dentist', 'pharmacy', 'medicine', 'hospital', 'clinic', 'gym', 'health', 'medical'];
+        categoryKeywords['Shopping'] = ['clothes', 'shoes', 'clothing', 'shop', 'mall', 'amazon', 'online', 'purchase', 'buy', 'bought', 'dress', 'fashion', 'outfit'];
+        categoryKeywords['Groceries'] = ['grocery', 'groceries', 'supermarket', 'vegetables', 'fruits', 'market'];
+    }
+
+    // First check exact user's custom category names
+    for (const cat of Object.keys(categoryKeywords)) {
         if (textLower.includes(cat.toLowerCase())) {
             return cat;
         }
     }
 
-    // Then check keyword mapping
-    for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    // Then check all keywords/hints
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
         for (const kw of keywords) {
             if (textLower.includes(kw)) {
                 return category;
@@ -446,7 +482,7 @@ function buildResponse(
             const amount = entities.amount || 0;
             const category = entities.category || classifyCategory(entities.note || '');
             const note = entities.note || category;
-            const date = entities.date || new Date().toISOString().split('T')[0];
+            const date = entities.date || toLocalDateString(new Date());
 
             answer = `Got it! I'll log ${formatCurrency(amount)} for ${category}.`;
             actions.push({
@@ -463,7 +499,7 @@ function buildResponse(
             const amount = entities.amount || 0;
             const category = entities.category || 'Other';
             const note = entities.note || category;
-            const date = entities.date || new Date().toISOString().split('T')[0];
+            const date = entities.date || toLocalDateString(new Date());
 
             answer = `Great! I'll record ${formatCurrency(amount)} income from ${category}.`;
             actions.push({
@@ -481,9 +517,11 @@ function buildResponse(
                 const matched = expenses.find(e => e.id === matchedIds[0]);
                 if (matched) {
                     const changes: Partial<Expense> = {};
-                    if (entities.amount) changes.amount = entities.amount;
-                    if (entities.category) changes.category = entities.category;
-                    if (entities.note) changes.note = entities.note;
+                    if (entities.amount && entities.amount !== Number(matched.amount)) changes.amount = entities.amount;
+                    if (entities.category && entities.category.toLowerCase() !== matched.category.toLowerCase()) changes.category = entities.category;
+                    if (entities.date && entities.date !== matched.date) changes.date = entities.date;
+                    // Note is often inferred aggressively, so we only update if user changed it. Usually we leave it alone if unchanged.
+                    if (entities.note && entities.note.length > 2 && entities.note !== matched.note && entities.note !== matched.category) changes.note = entities.note;
 
                     const changeDesc = Object.entries(changes).map(([k, v]) =>
                         k === 'amount' ? `amount to ${formatCurrency(v as number)}` : `${k} to "${v}"`
@@ -511,8 +549,9 @@ function buildResponse(
                 const matched = incomes.find(i => i.id === matchedIds[0]);
                 if (matched) {
                     const changes: Partial<Income> = {};
-                    if (entities.amount) changes.amount = entities.amount;
-                    if (entities.category) changes.category = entities.category;
+                    if (entities.amount && entities.amount !== Number(matched.amount)) changes.amount = entities.amount;
+                    if (entities.category && entities.category.toLowerCase() !== matched.category.toLowerCase()) changes.category = entities.category;
+                    if (entities.date && entities.date !== matched.date) changes.date = entities.date;
 
                     const changeDesc = Object.entries(changes).map(([k, v]) =>
                         k === 'amount' ? `amount to ${formatCurrency(v as number)}` : `${k} to "${v}"`
@@ -561,9 +600,10 @@ function buildQueryAnswer(
     incomes: Income[]
 ): { text: string; matchedIds: string[] } {
     const now = new Date();
-    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const thisWeekStart = new Date(now.getTime() - (now.getDay() * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
-    const todayStr = now.toISOString().split('T')[0];
+    const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const thisWeekStart = new Date(now.getTime() - (now.getDay() * 24 * 60 * 60 * 1000));
+    const thisWeekStartStr = `${thisWeekStart.getFullYear()}-${String(thisWeekStart.getMonth() + 1).padStart(2, '0')}-${String(thisWeekStart.getDate()).padStart(2, '0')}`;
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     // Determine time filter from original note/query text
     let filtered = expenses;
@@ -581,7 +621,7 @@ function buildQueryAnswer(
         filtered = filtered.filter(e => e.date?.startsWith(todayStr));
         timeLabel += 'today';
     } else if (noteAndCategory.includes('this week') || noteAndCategory.includes('week')) {
-        filtered = filtered.filter(e => e.date && e.date >= thisWeekStart);
+        filtered = filtered.filter(e => e.date && e.date >= thisWeekStartStr);
         timeLabel += 'this week';
     } else if (noteAndCategory.includes('this month') || noteAndCategory.includes('month')) {
         filtered = filtered.filter(e => e.date && e.date >= thisMonthStart);
@@ -706,14 +746,24 @@ function regexPrePass(text: string): IntentLabel | null {
 export async function processChat(
     message: string,
     expenses: Expense[],
-    expenseCategories: string[] = [],
-    incomeCategories: string[] = [],
+    expenseCategories: AICategory[] = [],
+    incomeCategories: AICategory[] = [],
     incomes: Income[] = []
 ): Promise<ChatResponse> {
-    console.log(`[LocalAI] Processing: "${message}"`);
+    console.log(`[LocalAI] Processing original: "${message}"`);
+    
+    // Preprocess: convert number words to digits (e.g., "fifty thousand" -> 50000)
+    const processedMessage = String(wordsToNumbers(message) || message);
+    if (processedMessage !== message) {
+        console.log(`[LocalAI] Preprocessed words-to-numbers: "${processedMessage}"`);
+    }
+
+    // Detect complex multi-part sentences
+    const numDigitsFound = (processedMessage.match(/(?:\d[\d,]*(?:\.\d{1,2})?)/g) || []).length;
+    const isComplex = /\b(?:and|also|plus|then)\b/i.test(processedMessage) && numDigitsFound >= 2;
 
     // Layer 1: Regex pre-pass
-    let intent = regexPrePass(message);
+    let intent = regexPrePass(processedMessage);
     let confidence = 1.0;
 
     if (intent) {
@@ -721,7 +771,7 @@ export async function processChat(
     } else {
         // Layer 2: DistilBERT classification
         try {
-            const result = await classifyIntent(message);
+            const result = await classifyIntent(processedMessage);
             intent = result.intent;
             confidence = result.confidence;
 
@@ -730,7 +780,8 @@ export async function processChat(
                 console.log(`[LocalAI] Low confidence (${(confidence * 100).toFixed(1)}%), rejecting intent: ${intent}`);
                 return {
                     answer: "I'm a financial assistant. I didn't quite catch that—could you rephrase it as an expense, income, or question about your spending?",
-                    actions: []
+                    actions: [],
+                    confidence
                 };
             }
         } catch (err) {
@@ -742,7 +793,7 @@ export async function processChat(
     }
 
     // Layer 3: Entity extraction
-    const entities = extractEntities(message, expenseCategories, incomeCategories);
+    const entities = extractEntities(processedMessage, expenseCategories, incomeCategories);
     console.log(`[LocalAI] Entities:`, entities);
 
     // Layer 4: Match expenses/incomes for edits and queries
@@ -756,8 +807,13 @@ export async function processChat(
     // Layer 5: Build response
     const response = buildResponse(intent, entities, matchedIds, expenses, incomes);
 
+    if (isComplex) {
+      console.log(`[LocalAI] Complex multi-intent detected, lowering confidence to 0.40 to trigger Gemini fallback.`);
+      confidence = 0.40;
+    }
+
     console.log(`[LocalAI] Response: intent=${intent}, confidence=${(confidence * 100).toFixed(1)}%, actions=${response.actions.length}`);
-    return response;
+    return { ...response, confidence };
 }
 
 /**

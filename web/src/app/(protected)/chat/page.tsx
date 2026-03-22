@@ -107,8 +107,8 @@ export default function ChatPage() {
         body: JSON.stringify({ 
           message: text, 
           mode,
-          expenseCategories: categories.filter(c => c.type === 'expense').map(c => c.name),
-          incomeCategories: categories.filter(c => c.type === 'income').map(c => c.name)
+          expenseCategories: categories.filter(c => c.type === 'expense').map(c => ({ name: c.name, hints: c.ai_hints })),
+          incomeCategories: categories.filter(c => c.type === 'income').map(c => ({ name: c.name, hints: c.ai_hints }))
         }),
       });
 

@@ -1,4 +1,5 @@
 import { processChat } from '@/shared/local-ai';
+import { processSageChat } from '@/shared/gemini';
 import { Income, Expense } from '@/shared/models';
 import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
@@ -53,6 +54,19 @@ export async function POST(req: Request) {
       incomeCategories || [],
       (incomes as Income[]) || []
     );
+
+    // Fallback if local AI confidence is low or handled complex query
+    if (result.confidence !== undefined && result.confidence < 0.65) {
+      console.log(`[API] Local AI confidence too low (${result.confidence}). Falling back to Gemini...`);
+      const geminiResult = await processSageChat(
+        message, 
+        (expenses as Expense[]) || [], 
+        expenseCategories || [],
+        incomeCategories || [],
+        (incomes as Income[]) || []
+      );
+      return NextResponse.json(geminiResult);
+    }
 
     console.log('Chat API Response:', { answer: result.answer.substring(0, 80), actionsCount: result.actions.length });
 
