@@ -177,6 +177,7 @@ export default function Dashboard() {
                     <LabelList 
                       dataKey="amount" 
                       position="top" 
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(val: any) => Number(val) > 0 ? compactFormatter.format(Number(val)) : ''} 
                       style={{ fontSize: '10px', fill: 'var(--on-surface-variant)', fontWeight: 500 }} 
                       dy={-4}
