@@ -98,18 +98,18 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Type Toggle - only show if creating new to avoid confusion on edit */}
         {!initialData && (
-          <div className="flex gap-2 p-1 bg-surface-container rounded-xl">
+          <div className="flex gap-2 p-1 bg-surface-container border border-surface-variant rounded-xl overflow-hidden shadow-inner">
             <button 
               type="button"
               onClick={() => { setType('expense'); setCategory('Other'); }}
-              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'expense' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'expense' ? 'bg-surface-variant text-on-surface shadow-md ring-1 ring-border' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
             >
               Expense
             </button>
             <button 
               type="button"
               onClick={() => { setType('income'); setCategory('Salary'); }}
-              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'income' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+              className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'income' ? 'bg-surface-variant text-on-surface shadow-md ring-1 ring-border' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
             >
               Income
             </button>

@@ -287,7 +287,7 @@ export default function ChatPage() {
           <textarea
             ref={textareaRef}
             rows={1}
-            placeholder={isOffline ? "You are offline. Reconnect to chat..." : "Ask anything..."}
+            placeholder={isOffline ? "You are offline. Reconnect to chat..." : "Log an expense or ask about your finances..."}
             value={input}
             disabled={isOffline || loading}
             onChange={(e) => {
@@ -308,7 +308,7 @@ export default function ChatPage() {
             disabled={!input.trim() || loading || isOffline}
             className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0 active:scale-95 disabled:opacity-50 transition-all shadow-md"
           >
-            <Send size={18} />
+            <Send size={18} className="fill-current" strokeWidth={2.5} />
           </button>
         </div>
       </div>

@@ -6,9 +6,10 @@ import { useMemo } from 'react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 import { Expense } from '@/shared/models';
 import { format } from 'date-fns';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 
 const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
+const compactFormatter = new Intl.NumberFormat('en-LK', { notation: "compact", maximumFractionDigits: 1 });
 
 export default function Dashboard() {
   const { expenses, stats, loading, hasFetched } = useExpenseData();
@@ -64,85 +65,96 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Spending Breakdown */}
-      <div className="mt-4 flex flex-col gap-3">
-        <h2 className="font-serif text-[20px] text-on-surface px-4">Breakdown</h2>
-        <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-2 snap-x">
-          {showSkeleton ? (
-            [1, 2, 3, 4].map(i => (
-              <div key={i} className="card min-w-[100px] h-[80px] bg-surface-container animate-pulse border border-border" />
-            ))
-          ) : (
-            stats.breakdown.map((item) => (
-              <div 
-                key={item.category}
-                className="card min-w-[100px] h-[80px] flex flex-col items-center justify-center flex-shrink-0 snap-start"
-              >
-                <div 
-                  className="w-3 h-3 rounded-full mb-1.5" 
-                  style={{ backgroundColor: CATEGORY_COLORS[item.category] || CATEGORY_COLORS['Other'] }} 
-                />
-                <span className="text-[12px] text-on-surface-variant">{item.category}</span>
-                <span className="font-mono text-[14px] text-on-surface font-medium">
-                  {currencyFormatter.format(item.amount)}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
       {/* Analytics Charts */}
-      <div className="mt-6 flex flex-col gap-6 px-4 pb-8">
+      <div className="mt-4 flex flex-col gap-6 px-4 pb-8">
         
-        {/* Category Pie Chart */}
+        {/* Combined Category Chart & Breakdown */}
         <div className="flex flex-col gap-2">
-          <h2 className="font-serif text-[18px] text-on-surface">Category Spending</h2>
-          <div className="card h-[220px] p-4 flex flex-col pt-6 pb-6 bg-surface-container border border-border">
+          <h2 className="font-serif text-[18px] text-on-surface">Categories Overview</h2>
+          <div className="card p-5 flex flex-col gap-6 bg-surface-container border border-border">
             {showSkeleton ? (
-              <div className="w-full h-full bg-surface-container-high animate-pulse rounded-full max-w-[140px] mx-auto" />
+              <div className="flex flex-col gap-4">
+                <div className="w-full h-[200px] bg-surface-container-high animate-pulse rounded-full max-w-[200px] mx-auto" />
+                <div className="flex flex-col gap-2">
+                   {[1,2,3].map(i => <div key={i} className="h-4 w-full bg-surface-container-high animate-pulse rounded" />)}
+                </div>
+              </div>
             ) : stats.breakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.breakdown}
-                    dataKey="amount"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    stroke="none"
-                  >
-                    {stats.breakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.category] || CATEGORY_COLORS['Other']} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number | string | readonly (number | string)[] | undefined) => currencyFormatter.format(Number(Array.isArray(value) ? value[0] : value) || 0)}
-                    contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                    itemStyle={{ color: 'var(--on-surface)' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="relative h-[220px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stats.breakdown}
+                        dataKey="amount"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={85}
+                        paddingAngle={3}
+                        stroke="none"
+                      >
+                        {stats.breakdown.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.category] || CATEGORY_COLORS['Other']} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number | string | readonly (number | string)[] | undefined) => currencyFormatter.format(Number(Array.isArray(value) ? value[0] : value) || 0)}
+                        contentStyle={{ backgroundColor: 'var(--surface-container-highest)', borderColor: 'var(--border)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                        itemStyle={{ color: 'var(--on-surface)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center Text */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">Total</span>
+                    <span className="font-mono text-[16px] text-on-surface font-semibold">
+                      {compactFormatter.format(stats.totalThisMonth)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Breakdown List */}
+                <div className="flex flex-col gap-3">
+                  {stats.breakdown.map((item) => (
+                    <div key={item.category} className="flex justify-between items-center text-[14px]">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: CATEGORY_COLORS[item.category] || CATEGORY_COLORS['Other'] }} 
+                        />
+                        <span className="text-on-surface-variant font-medium">{item.category}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[12px] text-on-surface-variant opacity-60 w-8 text-right">
+                          {Math.round((item.amount / stats.totalThisMonth) * 100)}%
+                        </span>
+                        <span className="font-mono text-on-surface font-medium">
+                          {currencyFormatter.format(item.amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
-               <div className="flex items-center justify-center h-full text-on-surface-variant text-[14px]">
+               <div className="flex items-center justify-center h-[200px] text-on-surface-variant text-[14px]">
                  No expenses this month
                </div>
             )}
           </div>
         </div>
 
-        {/* Last 7 Days Bar Chart */}
+        {/* Daily Spending Bar Chart */}
         <div className="flex flex-col gap-2">
-          <h2 className="font-serif text-[18px] text-on-surface">Last 7 Days</h2>
-          <div className="card h-[220px] p-4 pt-6 bg-surface-container border border-border">
+          <h2 className="font-serif text-[18px] text-on-surface">Daily Trend (7 Days)</h2>
+          <div className="card h-[260px] p-4 pt-8 bg-surface-container border border-border">
             {showSkeleton ? (
               <div className="w-full h-full bg-surface-container-high animate-pulse rounded-lg" />
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <BarChart data={dailyData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                   <XAxis 
                     dataKey="displayDate" 
                     axisLine={false} 
@@ -161,7 +173,15 @@ export default function Dashboard() {
                     fill="var(--primary)" 
                     radius={[4, 4, 0, 0]} 
                     maxBarSize={40}
-                  />
+                  >
+                    <LabelList 
+                      dataKey="amount" 
+                      position="top" 
+                      formatter={(val: any) => Number(val) > 0 ? compactFormatter.format(Number(val)) : ''} 
+                      style={{ fontSize: '10px', fill: 'var(--on-surface-variant)', fontWeight: 500 }} 
+                      dy={-4}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}

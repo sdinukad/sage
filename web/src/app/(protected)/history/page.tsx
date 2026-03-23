@@ -98,7 +98,10 @@ export default function HistoryPage() {
       {/* Date Range Filter */}
       <div className="px-4 py-2 flex items-center gap-2">
         <input 
-          type="date"
+          type="text"
+          onFocus={(e) => (e.target.type = "date")}
+          onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+          placeholder="Start date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"
@@ -106,7 +109,10 @@ export default function HistoryPage() {
         />
         <span className="text-on-surface-variant font-medium">-</span>
         <input 
-          type="date"
+          type="text"
+          onFocus={(e) => (e.target.type = "date")}
+          onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
+          placeholder="End date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"

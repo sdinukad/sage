@@ -58,18 +58,18 @@ export default function CategoriesPage() {
             
             <div className="flex flex-col gap-2">
               <label className="text-[12px] font-bold text-on-surface-variant uppercase tracking-wider">Type</label>
-              <div className="flex gap-2 p-1 bg-surface-container rounded-xl">
+              <div className="flex gap-2 p-1 bg-surface-container border border-surface-variant rounded-xl overflow-hidden shadow-inner">
                 <button 
                   type="button"
                   onClick={() => setType('expense')}
-                  className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'expense' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+                  className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'expense' ? 'bg-surface-variant text-on-surface shadow-md ring-1 ring-border' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
                 >
                   Expense
                 </button>
                 <button 
                   type="button"
                   onClick={() => setType('income')}
-                  className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'income' ? 'bg-surface-container-high text-on-surface shadow-sm' : 'text-on-surface-variant'}`}
+                  className={`flex-1 py-2 text-[14px] font-medium rounded-lg transition-all ${type === 'income' ? 'bg-surface-variant text-on-surface shadow-md ring-1 ring-border' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
                 >
                   Income
                 </button>

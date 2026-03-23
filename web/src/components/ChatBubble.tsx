@@ -8,9 +8,9 @@ interface ChatBubbleProps {
 
 const ThinkingAnimation = React.memo(() => (
   <div className="flex gap-1.5 py-1 px-1">
-    <div className="w-2 h-2 rounded-full bg-on-surface-variant animate-[thinkingDot_1.4s_ease-in-out_infinite]" />
-    <div className="w-2 h-2 rounded-full bg-on-surface-variant animate-[thinkingDot_1.4s_ease-in-out_infinite] [animation-delay:200ms]" />
-    <div className="w-2 h-2 rounded-full bg-on-surface-variant animate-[thinkingDot_1.4s_ease-in-out_infinite] [animation-delay:400ms]" />
+    <div className="typing-dot" />
+    <div className="typing-dot" />
+    <div className="typing-dot" />
   </div>
 ));
 ThinkingAnimation.displayName = 'ThinkingAnimation';

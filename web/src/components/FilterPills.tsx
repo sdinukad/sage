@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
+import { CATEGORY_COLORS } from '@/components/CategoryBadge';
 
 interface FilterPillsProps {
   activeFilter: string;
@@ -23,21 +24,28 @@ const FilterPills: React.FC<FilterPillsProps> = ({ activeFilter, onFilterChange 
     
     return ['All', ...activeCats, ...danglingCats];
   }, [categories, expenses, incomes]);
+
   return (
-    <div className="sticky top-[calc(56px+env(safe-area-inset-top))] z-30 bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-border">
-      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar snap-x">
+    <div className="sticky top-[calc(56px+env(safe-area-inset-top))] z-30 bg-surface/90 backdrop-blur-md border-b border-border">
+      <div className="flex items-center gap-2 py-3 overflow-x-auto no-scrollbar snap-x w-full before:content-[''] before:w-4 before:flex-shrink-0 after:content-[''] after:w-4 after:flex-shrink-0">
         {filterList.map((cat) => {
           const isActive = activeFilter === cat;
           return (
             <button
               key={cat}
               onClick={() => onFilterChange(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200 border snap-start ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200 border snap-start flex-shrink-0 ${
                 isActive 
                 ? 'bg-primary text-on-primary border-primary' 
-                : 'bg-surface text-on-surface-variant border-outline-variant'
+                : 'bg-surface-container text-on-surface border-outline-variant hover:bg-surface-container-high'
               }`}
             >
+              {cat !== 'All' && (
+                <div 
+                  className="w-2 h-2 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: CATEGORY_COLORS[cat] || CATEGORY_COLORS['Other'] }} 
+                />
+              )}
               {cat}
             </button>
           );
