@@ -11,3 +11,6 @@ ai/venv/
 ai/output/
 ai/model_cache/
 ai/bert_tiny_cache/
+
+# Ignore local handoff documents
+docs/handoffs/
