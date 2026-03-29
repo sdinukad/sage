@@ -155,17 +155,38 @@ export async function pullRemoteData() {
     supabase.from('categories').select('*') // Categories rarely exceed 1000
   ]);
 
-  if (expData.length > 0) {
+  if (expData) {
+    const remoteIds = new Set(expData.map(e => e.id));
+    const localItems = await db.expenses.toArray();
+    const toDelete = localItems
+      .filter(e => e.sync_status === 'synced' && !remoteIds.has(e.id))
+      .map(e => e.id);
+    if (toDelete.length > 0) await db.expenses.bulkDelete(toDelete);
+
     const syncedExp = expData.map(e => ({ ...e, sync_status: 'synced' as const }));
     await db.expenses.bulkPut(syncedExp);
   }
   
-  if (incData.length > 0) {
+  if (incData) {
+    const remoteIds = new Set(incData.map(i => i.id));
+    const localItems = await db.incomes.toArray();
+    const toDelete = localItems
+      .filter(i => i.sync_status === 'synced' && !remoteIds.has(i.id))
+      .map(i => i.id);
+    if (toDelete.length > 0) await db.incomes.bulkDelete(toDelete);
+
     const syncedInc = incData.map(i => ({ ...i, sync_status: 'synced' as const }));
     await db.incomes.bulkPut(syncedInc);
   }
 
   if (catRes.data) {
+    const remoteIds = new Set(catRes.data.map(c => c.id));
+    const localItems = await db.categories.toArray();
+    const toDelete = localItems
+      .filter(c => c.sync_status === 'synced' && !remoteIds.has(c.id))
+      .map(c => c.id);
+    if (toDelete.length > 0) await db.categories.bulkDelete(toDelete);
+
     const syncedCat = catRes.data.map(c => ({ ...(c as Omit<LocalCategory, 'sync_status'>), sync_status: 'synced' as const }));
     await db.categories.bulkPut(syncedCat);
   }
