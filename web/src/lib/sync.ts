@@ -115,29 +115,59 @@ export async function syncDeleteCategory(id: string) {
   }
 }
 
+async function fetchAllFromTable<T>(table: string, orderBy?: string): Promise<T[]> {
+  let allData: T[] = [];
+  let from = 0;
+  const limit = 1000;
+  
+  while (true) {
+    let query = supabase.from(table).select('*').range(from, from + limit - 1);
+    if (orderBy) {
+      query = query.order(orderBy, { ascending: false });
+    }
+    
+    const { data, error } = await query as unknown as { data: T[] | null, error: Error | null };
+      
+    if (error) {
+      console.error(`Error fetching ${table}:`, error);
+      break;
+    }
+    
+    if (data) {
+      allData = [...allData, ...data];
+      if (data.length < limit) break;
+      from += limit;
+    } else {
+      break;
+    }
+  }
+  return allData;
+}
+
 /**
  * Sweeps the remote Supabase database and reconciles the local DB.
  * Only overwrites locally if the local item isn't pending an upload.
  */
 export async function pullRemoteData() {
-  const [expRes, incRes, catRes] = await Promise.all([
-    supabase.from('expenses').select('*').order('date', { ascending: false }),
-    supabase.from('incomes').select('*').order('date', { ascending: false }),
-    supabase.from('categories').select('*')
+  const [expData, incData, catRes] = await Promise.all([
+    fetchAllFromTable<Expense>('expenses', 'date'),
+    fetchAllFromTable<Income>('incomes', 'date'),
+    supabase.from('categories').select('*') // Categories rarely exceed 1000
   ]);
 
-  if (expRes.data) {
-    const syncedExp = expRes.data.map(e => ({ ...e, sync_status: 'synced' as const }));
+  if (expData.length > 0) {
+    const syncedExp = expData.map(e => ({ ...e, sync_status: 'synced' as const }));
     await db.expenses.bulkPut(syncedExp);
   }
   
-  if (incRes.data) {
-    const syncedInc = incRes.data.map(i => ({ ...i, sync_status: 'synced' as const }));
+  if (incData.length > 0) {
+    const syncedInc = incData.map(i => ({ ...i, sync_status: 'synced' as const }));
     await db.incomes.bulkPut(syncedInc);
   }
 
   if (catRes.data) {
-    const syncedCat = catRes.data.map(c => ({ ...c, sync_status: 'synced' as const }));
+    const syncedCat = catRes.data.map(c => ({ ...(c as Omit<LocalCategory, 'sync_status'>), sync_status: 'synced' as const }));
     await db.categories.bulkPut(syncedCat);
   }
 }
+
