@@ -14,15 +14,12 @@ const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), {
   ssr: false,
 });
 
-const currencyFormatter = new Intl.NumberFormat('en-LK', {
-  style: 'currency',
-  currency: 'LKR',
-  maximumFractionDigits: 0,
-});
+import { useSettings } from '@/context/SettingsContext';
 
 export default function HistoryPage() {
   const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched } =
     useExpenseData();
+  const { formatCurrency } = useSettings();
   const [activeFilter, setActiveFilter] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -67,10 +64,11 @@ export default function HistoryPage() {
         groups[monthYear] = { total: 0, items: [] };
       }
       groups[monthYear].items.push(item);
+      const val = Number(item.base_amount || item.amount);
       if (item.type === 'expense') {
-        groups[monthYear].total -= Number(item.amount);
+        groups[monthYear].total -= val;
       } else {
-        groups[monthYear].total += Number(item.amount);
+        groups[monthYear].total += val;
       }
     });
 
@@ -188,7 +186,7 @@ export default function HistoryPage() {
                         : 'var(--surface-container)',
                     }}
                   >
-                    {total >= 0 ? '+' : ''}{currencyFormatter.format(total)}
+                    {total >= 0 ? '+' : ''}{formatCurrency(total)}
                   </span>
                 </div>
 
@@ -262,6 +260,9 @@ export default function HistoryPage() {
                         <ExpenseRow
                           id={item.id}
                           amount={Number(item.amount)}
+                          currency={item.currency}
+                          base_amount={item.base_amount}
+                          base_currency={item.base_currency}
                           category={item.category}
                           note={item.note || ''}
                           date={item.date}

@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { processQuery } from '@/shared/local-ai';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,7 +12,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query and expenses are required' }, { status: 400 });
     }
 
-    const data = await processQuery(query, expenses);
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.set({ name, value: '', ...options });
+          },
+        },
+      }
+    );
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('locale, currency')
+      .eq('id', session.user.id)
+      .single();
+
+    const locale = profile?.locale || 'en-LK';
+    const currency = profile?.currency || 'LKR';
+
+    const data = await processQuery(query, expenses, locale, currency);
 
     return NextResponse.json(data);
   } catch (error) {

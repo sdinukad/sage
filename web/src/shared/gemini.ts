@@ -68,7 +68,9 @@ export async function processSageChat(
     expenses: Expense[],
     expenseCategories: AICategory[] = [],
     incomeCategories: AICategory[] = [],
-    incomes: Income[] = []
+    incomes: Income[] = [],
+    locale: string = 'en-LK',
+    baseCurrency: string = 'LKR'
 ): Promise<ChatResponse> {
     const buildCatString = (cats: AICategory[], fallback: string) => {
         if (cats.length === 0) return fallback;
@@ -80,6 +82,7 @@ export async function processSageChat(
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
     You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    The user's preferred currency is ${baseCurrency} and their locale is ${locale}. Formulate text responses including monetary amounts using this currency.
     
     Expense Categories: ${expCats}
     Income Categories: ${incCats}
@@ -99,8 +102,8 @@ export async function processSageChat(
                 "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
-                    "newExpense": { "amount": number, "category": "...", "note": "...", "date": "ISO string" },
-                    "newIncome": { "amount": number, "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "newExpense": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
+                    "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
                     "editExpense": { "id": "uuid", "changes": { ... } },
                     "editIncome": { "id": "uuid", "changes": { ... } }
                 },
@@ -134,7 +137,9 @@ export async function processSageChatStream(
     expenses: Expense[],
     expenseCategories: AICategory[] = [],
     incomeCategories: AICategory[] = [],
-    incomes: Income[] = []
+    incomes: Income[] = [],
+    locale: string = 'en-LK',
+    baseCurrency: string = 'LKR'
 ): Promise<ReadableStream> {
     const buildCatString = (cats: AICategory[], fallback: string) => {
         if (cats.length === 0) return fallback;
@@ -145,7 +150,8 @@ export async function processSageChatStream(
 
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
-    You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
+    You can track both EXPENSES and INCOMES.
+    The user's preferred currency is ${baseCurrency} and their locale is ${locale}. Formulate text responses including monetary amounts using this currency.
     
     Expense Categories: ${expCats}
     Income Categories: ${incCats}
@@ -165,8 +171,8 @@ export async function processSageChatStream(
                 "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
-                    "newExpense": { "amount": number, "category": "...", "note": "...", "date": "ISO string" },
-                    "newIncome": { "amount": number, "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "newExpense": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
+                    "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
                     "editExpense": { "id": "uuid", "changes": { ... } },
                     "editIncome": { "id": "uuid", "changes": { ... } }
                 },

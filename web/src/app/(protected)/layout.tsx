@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/context/AuthContext';
 import { ExpenseDataProvider } from '@/context/ExpenseDataContext';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 export default function ProtectedLayout({
   children,
@@ -23,8 +24,11 @@ export default function ProtectedLayout({
   return (
     <AppShell>
       <ExpenseDataProvider>
-        {children}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
       </ExpenseDataProvider>
     </AppShell>
   );
 }
+

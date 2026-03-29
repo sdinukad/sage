@@ -40,6 +40,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title, child
       <div 
         className={`absolute bottom-0 left-0 right-0 bg-surface-container rounded-t-[28px] max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${isOpen ? 'translate-y-0' : 'translate-y-full'} border-t ghost-border`}
         style={{ overscrollBehavior: 'contain' }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Handle Bar */}
         <div className="w-9 h-1 bg-outline-variant rounded-full mx-auto mt-3 mb-4" />

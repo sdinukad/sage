@@ -36,10 +36,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [ { data: incomes }, { data: expenses } ] = await Promise.all([
+    const [ { data: incomes }, { data: expenses }, { data: profile } ] = await Promise.all([
       supabase.from('incomes').select('*').order('date', { ascending: false }),
-      supabase.from('expenses').select('*').order('date', { ascending: false })
+      supabase.from('expenses').select('*').order('date', { ascending: false }),
+      supabase.from('profiles').select('locale, currency').eq('id', session.user.id).single()
     ]);
+
+    const locale = profile?.locale || 'en-LK';
+    const currency = profile?.currency || 'LKR';
 
     console.log('Chat API Request:', { 
       messageLength: message?.length, 
@@ -52,7 +56,9 @@ export async function POST(req: Request) {
       (expenses as Expense[]) || [], 
       expenseCategories || [],
       incomeCategories || [],
-      (incomes as Income[]) || []
+      (incomes as Income[]) || [],
+      locale,
+      currency
     );
 
     // Fallback if local AI confidence is low or handled complex query
@@ -63,7 +69,9 @@ export async function POST(req: Request) {
         (expenses as Expense[]) || [], 
         expenseCategories || [],
         incomeCategories || [],
-        (incomes as Income[]) || []
+        (incomes as Income[]) || [],
+        locale,
+        currency
       );
       return NextResponse.json(geminiResult);
     }

@@ -143,12 +143,12 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     const totals: Record<string, number> = {};
     let monthTotal = 0;
     thisMonthData.forEach((exp) => {
-      const amt = Number(exp.amount);
+      const amt = Number(exp.base_amount || exp.amount);
       totals[exp.category] = (totals[exp.category] || 0) + amt;
       monthTotal += amt;
     });
 
-    const lastMonthTotal = lastMonthData.reduce((acc, exp) => acc + Number(exp.amount), 0);
+    const lastMonthTotal = lastMonthData.reduce((acc, exp) => acc + Number(exp.base_amount || exp.amount), 0);
     const vsLastMonth = lastMonthTotal > 0
       ? `${Math.round(((monthTotal - lastMonthTotal) / lastMonthTotal) * 100)}%`
       : '+100%';

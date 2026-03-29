@@ -17,19 +17,11 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
-
-const currencyFormatter = new Intl.NumberFormat('en-LK', {
-  style: 'currency',
-  currency: 'LKR',
-  maximumFractionDigits: 0,
-});
-const compactFormatter = new Intl.NumberFormat('en-LK', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
+import { useSettings } from '@/context/SettingsContext';
 
 export default function Dashboard() {
   const { expenses, stats, loading, hasFetched } = useExpenseData();
+  const { formatCurrency, formatCompact } = useSettings();
 
   const dailyData = useMemo(() => {
     const data: { date: string; displayDate: string; amount: number }[] = [];
@@ -45,7 +37,7 @@ export default function Dashboard() {
     }
     expenses.forEach((exp: Expense) => {
       const entry = data.find((d) => d.date === exp.date);
-      if (entry) entry.amount += Number(exp.amount);
+      if (entry) entry.amount += Number(exp.base_amount || exp.amount);
     });
     return data;
   }, [expenses]);
@@ -137,7 +129,7 @@ export default function Dashboard() {
                               | readonly (number | string)[]
                               | undefined
                           ) =>
-                            currencyFormatter.format(
+                            formatCurrency(
                               Number(
                                 Array.isArray(value) ? value[0] : value
                               ) || 0
@@ -161,7 +153,7 @@ export default function Dashboard() {
                         Total
                       </span>
                       <span className="font-mono text-[17px] text-on-surface font-bold mt-0.5">
-                        {compactFormatter.format(stats.totalThisMonth)}
+                        {formatCompact(stats.totalThisMonth)}
                       </span>
                     </div>
                   </div>
@@ -198,7 +190,7 @@ export default function Dashboard() {
                               {pct}%
                             </span>
                             <span className="font-mono text-on-surface font-semibold text-[13px]">
-                              {currencyFormatter.format(item.amount)}
+                              {formatCurrency(item.amount)}
                             </span>
                           </div>
                         </div>
@@ -265,10 +257,9 @@ export default function Dashboard() {
                           | readonly (number | string)[]
                           | undefined
                       ) => [
-                        currencyFormatter.format(
-                          Number(
-                            Array.isArray(value) ? value[0] : value
-                          ) || 0
+                        formatCurrency(
+                          Number(Array.isArray(value) ? value[0] : value) ||
+                            0
                         ),
                         'Spent',
                       ]}
@@ -299,7 +290,7 @@ export default function Dashboard() {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         formatter={(val: any) =>
                           Number(val) > 0
-                            ? compactFormatter.format(Number(val))
+                            ? formatCompact(Number(val))
                             : ''
                         }
                         style={{

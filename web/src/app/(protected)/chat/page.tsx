@@ -2,20 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ChatResponse, Expense, ChatAction } from '@/shared/models';
+import { Expense, Income, ChatAction, ChatResponse } from '@/shared/models';
 import { Send, Sparkles } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
 import ConfirmationCard from '@/components/ConfirmationCard';
 import { CATEGORY_COLORS } from '@/components/CategoryBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
-import { syncAddExpense, syncUpdateExpense } from '@/lib/sync';
-
-const currencyFormatter = new Intl.NumberFormat('en-LK', {
-  style: 'currency',
-  currency: 'LKR',
-  minimumFractionDigits: 0,
-});
+import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome } from '@/lib/sync';
+import { getRate } from '@/lib/exchange-rates';
+import { useSettings } from '@/context/SettingsContext';
 
 interface Message {
   id: string;
@@ -29,6 +25,7 @@ type ChatMode = 'ask' | 'edit';
 
 export default function ChatPage() {
   const { user } = useAuth();
+  const { currency, formatCurrency } = useSettings();
   const { expenses, categories, refreshData } = useExpenseData();
   const [mode] = useState<ChatMode>('ask');
   const [input, setInput] = useState('');
@@ -176,28 +173,51 @@ export default function ChatPage() {
         );
         success = true;
       } else if (action.type === 'add_expense' && action.data?.newExpense) {
+        const date = action.data.newExpense.date || new Date().toISOString().split('T')[0];
+        const extCurrency = action.data.newExpense.currency || currency;
+        const amount = Number(action.data.newExpense.amount || 0);
+        
+        const rate = await getRate(extCurrency, currency, date);
+        const base_amount = Number((amount * rate).toFixed(2));
+
         await syncAddExpense({
           ...action.data.newExpense,
           id: crypto.randomUUID(),
           user_id: user.id,
           created_at: new Date().toISOString(),
-          date:
-            action.data.newExpense.date ||
-            new Date().toISOString().split('T')[0],
+          date,
+          currency: extCurrency,
+          base_currency: currency,
+          base_amount,
+          exchange_rate: rate,
         } as Expense);
         success = true;
       } else if (action.type === 'add_income' && action.data?.newIncome) {
-        const { error } = await supabase.from('incomes').insert({
+        const date = action.data.newIncome.date || new Date().toISOString().split('T')[0];
+        const extCurrency = action.data.newIncome.currency || currency;
+        const amount = Number(action.data.newIncome.amount || 0);
+        
+        const rate = await getRate(extCurrency, currency, date);
+        const base_amount = Number((amount * rate).toFixed(2));
+
+        await syncAddIncome({
           ...action.data.newIncome,
+          id: crypto.randomUUID(),
           user_id: user.id,
-        });
-        if (!error) success = true;
+          created_at: new Date().toISOString(),
+          date,
+          currency: extCurrency,
+          base_currency: currency,
+          base_amount,
+          exchange_rate: rate,
+        } as Income);
+        success = true;
       } else if (action.type === 'edit_income' && action.data?.editIncome) {
-        const { error } = await supabase
-          .from('incomes')
-          .update(action.data.editIncome.changes)
-          .eq('id', action.data.editIncome.id);
-        if (!error) success = true;
+        await syncUpdateIncome(
+          action.data.editIncome.id,
+          action.data.editIncome.changes
+        );
+        success = true;
       }
     } catch (err) {
       console.error('Action error:', err);
@@ -358,7 +378,7 @@ export default function ChatPage() {
                             </span>
                           </div>
                           <span className="font-mono text-[20px] text-on-surface font-semibold">
-                            {currencyFormatter.format(Number(exp.amount))}
+                            {formatCurrency(Number(exp.base_amount || exp.amount))}
                           </span>
                           <span className="text-[12px] text-on-surface-variant truncate">
                             {exp.note || 'No description'}

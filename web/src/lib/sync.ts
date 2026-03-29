@@ -145,6 +145,75 @@ async function fetchAllFromTable<T>(table: string, orderBy?: string): Promise<T[
 }
 
 /**
+ * Scans the local IndexedDB for any records that need to be pushed to Supabase.
+ * This handles 'pending_insert' and 'pending_update' by performing a bulk upsert,
+ * and 'pending_delete' by performing a bulk delete.
+ */
+export async function pushLocalData() {
+  // 1. Fetch all pending expenses
+  const pendingExpenses = await db.expenses
+    .filter(e => e.sync_status !== 'synced')
+    .toArray();
+
+  if (pendingExpenses.length > 0) {
+    const toUpsert = pendingExpenses
+      .filter(e => e.sync_status === 'pending_insert' || e.sync_status === 'pending_update')
+      .map(({ sync_status, ...rest }) => rest);
+    
+    if (toUpsert.length > 0) {
+      const { error } = await supabase.from('expenses').upsert(toUpsert);
+      if (!error) {
+        const ids = toUpsert.map(e => e.id);
+        await db.expenses.where('id').anyOf(ids).modify({ sync_status: 'synced' });
+      }
+    }
+
+    const toDelete = pendingExpenses
+      .filter(e => e.sync_status === 'pending_delete')
+      .map(e => e.id);
+    
+    if (toDelete.length > 0) {
+      const { error } = await supabase.from('expenses').delete().in('id', toDelete);
+      if (!error) {
+        await db.expenses.bulkDelete(toDelete);
+      }
+    }
+  }
+
+  // 2. Fetch all pending incomes
+  const pendingIncomes = await db.incomes
+    .filter(i => i.sync_status !== 'synced')
+    .toArray();
+
+  if (pendingIncomes.length > 0) {
+    const toUpsert = pendingIncomes
+      .filter(i => i.sync_status === 'pending_insert' || i.sync_status === 'pending_update')
+      .map(({ sync_status, ...rest }) => rest);
+    
+    if (toUpsert.length > 0) {
+      const { error } = await supabase.from('incomes').upsert(toUpsert);
+      if (!error) {
+        const ids = toUpsert.map(i => i.id);
+        await db.incomes.where('id').anyOf(ids).modify({ sync_status: 'synced' });
+      }
+    }
+
+    const toDelete = pendingIncomes
+      .filter(i => i.sync_status === 'pending_delete')
+      .map(i => i.id);
+    
+    if (toDelete.length > 0) {
+      const { error } = await supabase.from('incomes').delete().in('id', toDelete);
+      if (!error) {
+        await db.incomes.bulkDelete(toDelete);
+      }
+    }
+  }
+
+  console.log(`[Sync] Local push complete. Processed ${pendingExpenses.length} expenses and ${pendingIncomes.length} incomes.`);
+}
+
+/**
  * Sweeps the remote Supabase database and reconciles the local DB.
  * Only overwrites locally if the local item isn't pending an upload.
  */
@@ -158,24 +227,34 @@ export async function pullRemoteData() {
   if (expData) {
     const remoteIds = new Set(expData.map(e => e.id));
     const localItems = await db.expenses.toArray();
+    
+    // Safety check: Don't overwrite things that are currently pending an outgoing push
+    const pendingIds = new Set(localItems.filter(e => e.sync_status !== 'synced').map(e => e.id));
+
     const toDelete = localItems
       .filter(e => e.sync_status === 'synced' && !remoteIds.has(e.id))
       .map(e => e.id);
     if (toDelete.length > 0) await db.expenses.bulkDelete(toDelete);
 
-    const syncedExp = expData.map(e => ({ ...e, sync_status: 'synced' as const }));
+    const syncedExp = expData
+      .filter(e => !pendingIds.has(e.id))
+      .map(e => ({ ...e, sync_status: 'synced' as const }));
     await db.expenses.bulkPut(syncedExp);
   }
   
   if (incData) {
     const remoteIds = new Set(incData.map(i => i.id));
     const localItems = await db.incomes.toArray();
+    const pendingIds = new Set(localItems.filter(i => i.sync_status !== 'synced').map(i => i.id));
+
     const toDelete = localItems
       .filter(i => i.sync_status === 'synced' && !remoteIds.has(i.id))
       .map(i => i.id);
     if (toDelete.length > 0) await db.incomes.bulkDelete(toDelete);
 
-    const syncedInc = incData.map(i => ({ ...i, sync_status: 'synced' as const }));
+    const syncedInc = incData
+      .filter(i => !pendingIds.has(i.id))
+      .map(i => ({ ...i, sync_status: 'synced' as const }));
     await db.incomes.bulkPut(syncedInc);
   }
 

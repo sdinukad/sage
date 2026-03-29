@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus, ReceiptText, Trophy } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
 
 interface HeroCardProps {
   amount: number;
@@ -9,6 +10,7 @@ interface HeroCardProps {
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({ amount, vsLastMonth, expenseCount, topCategory }) => {
+  const { formatCurrency } = useSettings();
   const isUp = vsLastMonth.includes('+');
   const isDown = vsLastMonth.includes('-');
 
@@ -19,12 +21,7 @@ const HeroCard: React.FC<HeroCardProps> = ({ amount, vsLastMonth, expenseCount, 
     ? { color: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', borderColor: 'rgba(22, 163, 74, 0.25)' }
     : { color: 'var(--on-surface-variant)', backgroundColor: 'var(--surface-container)', borderColor: 'var(--outline-variant)' };
 
-  const formattedAmount = new Intl.NumberFormat('en-LK', {
-    style: 'currency',
-    currency: 'LKR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const formattedAmount = formatCurrency(amount);
 
   return (
     <div

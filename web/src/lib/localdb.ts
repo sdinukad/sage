@@ -21,18 +21,52 @@ export interface LocalCategory {
   sync_status: SyncStatus;
 }
 
+export interface LocalExchangeRate {
+  from_currency: string;
+  to_currency: string;
+  date: string; // YYYY-MM-DD
+  rate: number;
+}
+
 const db = new Dexie('SageLocalDB') as Dexie & {
   expenses: EntityTable<LocalExpense, 'id'>;
   incomes: EntityTable<LocalIncome, 'id'>;
   categories: EntityTable<LocalCategory, 'id'>;
+  exchange_rates: EntityTable<LocalExchangeRate, '[from_currency+to_currency+date]'>;
 };
 
-// Schema declaration:
-// The first item is the explicitly primary key. The rest are indexed columns.
+// v2: Original schema
 db.version(2).stores({
   expenses: 'id, date, sync_status',
   incomes: 'id, date, sync_status',
   categories: 'id, name, type, sync_status'
+});
+
+// v3: Multi-currency support
+db.version(3).stores({
+  expenses: 'id, date, sync_status, currency',
+  incomes: 'id, date, sync_status, currency',
+  categories: 'id, name, type, sync_status',
+  exchange_rates: '[from_currency+to_currency+date], date'
+}).upgrade(tx => {
+  // Backfill existing expenses with LKR defaults
+  tx.table('expenses').toCollection().modify(exp => {
+    if (!exp.currency) {
+      exp.currency = 'LKR';
+      exp.base_amount = exp.amount;
+      exp.base_currency = 'LKR';
+      exp.exchange_rate = 1;
+    }
+  });
+  // Backfill existing incomes with LKR defaults
+  tx.table('incomes').toCollection().modify(inc => {
+    if (!inc.currency) {
+      inc.currency = 'LKR';
+      inc.base_amount = inc.amount;
+      inc.base_currency = 'LKR';
+      inc.exchange_rate = 1;
+    }
+  });
 });
 
 export { db };

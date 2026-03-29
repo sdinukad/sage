@@ -110,7 +110,7 @@
   --on-tertiary-fixed-variant: #363d35;
 
   /* Error */
-  --error: #ffb4ab;
+  --error: #ff5252;
   --error-container: #93000a;
   --on-error: #690005;
   --on-error-container: #ffdad6;
@@ -305,6 +305,18 @@ h1, h2, h3, .font-serif {
   to { background-position: 200% 0; }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
 /* ── Typing indicator dots ── */
 .typing-dot {
   width: 6px;
@@ -317,15 +329,6 @@ h1, h2, h3, .font-serif {
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
 .typing-dot:nth-child(3) { animation-delay: 0s; }
 
-/* ── Reduced Motion ── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
 
 /* ── Scrollbars ── */
 .no-scrollbar::-webkit-scrollbar {
