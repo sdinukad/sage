@@ -7,17 +7,13 @@ import {
   House,
   Clock,
   Sparkles,
-  Plus,
   Sun,
   Moon,
   WifiOff,
   Settings,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
-
-const ExpenseModal = dynamic(() => import('./ExpenseModal'), { ssr: false, loading: () => null });
 
 // ────────────────────────────────────────────────────────────
 // Theme Toggle
@@ -58,10 +54,8 @@ const navItems = [
 // ────────────────────────────────────────────────────────────
 function DesktopSidebar({
   pathname,
-  onAddExpense,
 }: {
   pathname: string;
-  onAddExpense: () => void;
 }) {
   return (
     <aside className="hidden lg:flex flex-col shrink-0 w-[220px] xl:w-[240px] h-screen sticky top-0 border-r border-outline-variant/20 bg-surface/60 backdrop-blur-md">
@@ -106,25 +100,11 @@ function DesktopSidebar({
             </Link>
           );
         })}
-
       </nav>
 
-      {/* Add Expense CTA */}
       <div className="px-3 pb-4 flex flex-col gap-3">
-        {/* 
-        <button
-          onClick={onAddExpense}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[14px] font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
-          style={{
-            background: 'linear-gradient(135deg, var(--primary) 0%, var(--on-primary-container) 100%)',
-            color: 'var(--on-primary)',
-          }}
-        >
-          <Plus size={16} />
-          Add Expense
-        </button> 
-        */}
-
+        {/* Add Expense available via Chat/AI for now. Button logic preserved in git history. */}
+        
         {/* Theme + version */}
         <div className="flex items-center justify-between px-1">
           <span className="text-[11px] text-on-surface-variant opacity-60">v1.0.0</span>
@@ -138,20 +118,11 @@ function DesktopSidebar({
 // ────────────────────────────────────────────────────────────
 // Mobile Header
 // ────────────────────────────────────────────────────────────
-function MobileHeader({ onAddExpense }: { onAddExpense: () => void }) {
+function MobileHeader() {
   return (
     <header className="lg:hidden sticky-header sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 flex items-center justify-between border-b border-outline-variant/10">
       <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
       <div className="flex items-center gap-1">
-        {/* 
-        <button
-          onClick={onAddExpense}
-          className="p-2 text-on-surface-variant hover:text-on-surface transition-colors rounded-lg hover:bg-surface-container-high"
-          title="Add expense"
-        >
-          <Plus size={20} />
-        </button> 
-        */}
         <ThemeToggle />
       </div>
     </header>
@@ -193,8 +164,6 @@ interface AppShellProps {
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const pathname = usePathname();
   useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasRenderedModal, setHasRenderedModal] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
@@ -212,17 +181,12 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
     };
   }, []);
 
-  const openModal = () => {
-    if (!hasRenderedModal) setHasRenderedModal(true);
-    setIsModalOpen(true);
-  };
-
   const isChatPage = pathname === '/chat';
 
   return (
     <div className="min-h-dvh bg-background flex">
       {/* ── Desktop sidebar ── */}
-      <DesktopSidebar pathname={pathname} onAddExpense={openModal} />
+      <DesktopSidebar pathname={pathname} />
 
       {/* ── Right side: header + content ── */}
       <div
@@ -231,7 +195,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
         }`}
       >
         {/* Mobile-only header */}
-        <MobileHeader onAddExpense={openModal} />
+        <MobileHeader />
 
         {/* Offline banner */}
         {isOffline && (
@@ -270,11 +234,6 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
       {/* Mobile bottom nav */}
       <MobileBottomNav pathname={pathname} />
-
-      {/* Expense Modal */}
-      {hasRenderedModal && (
-        <ExpenseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      )}
     </div>
   );
 };
