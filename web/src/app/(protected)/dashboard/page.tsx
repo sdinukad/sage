@@ -56,17 +56,7 @@ export default function Dashboard() {
     <div className="flex flex-col">
       {/* ── Hero ── */}
       {showSkeleton ? (
-        <div className="w-full bg-surface-container rounded-b-[24px] h-[196px] animate-pulse flex flex-col px-6 pt-6 pb-8 gap-4 shadow-lg">
-          <div className="flex flex-col gap-2">
-            <div className="w-20 h-3 bg-white/10 rounded-full" />
-            <div className="w-56 h-12 bg-white/10 rounded-lg mt-1" />
-          </div>
-          <div className="flex gap-2 mt-4 pt-2">
-            <div className="w-28 h-6 bg-white/10 rounded-full" />
-            <div className="w-20 h-6 bg-white/10 rounded-full" />
-            <div className="w-24 h-6 bg-white/10 rounded-full" />
-          </div>
-        </div>
+        <div className="mx-4 mt-6 mb-4 rounded-2xl h-[188px] skeleton" />
       ) : (
         <HeroCard
           amount={stats.totalThisMonth}
@@ -76,38 +66,46 @@ export default function Dashboard() {
         />
       )}
 
-      {/* ── Charts grid ── */}
-      {/*
-        Mobile: stacked single column
-        Desktop (lg+): 2-column side by side
-      */}
-      <div className="mt-6 px-4 lg:px-8 pb-10">
-        {/* Desktop page title */}
-        <div className="mb-5 hidden lg:block">
+      {/* ── Charts section ── */}
+      <div className="mt-2 px-4 lg:px-8 pb-10">
+        {/* Desktop section heading */}
+        <div className="mb-6 hidden lg:block">
           <h1 className="font-serif text-[26px] font-semibold text-on-surface">Dashboard</h1>
-          <p className="text-[13px] text-on-surface-variant mt-0.5">Your finances at a glance</p>
+          <p className="text-[13px] text-on-surface-variant mt-0.5">
+            Your finances at a glance
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Mobile section heading */}
+        <div className="mb-4 lg:hidden">
+          <h1 className="font-serif text-[20px] font-semibold text-on-surface">Overview</h1>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* ── Category Overview ── */}
           <div className="flex flex-col gap-2">
-            <h2 className="font-serif text-[18px] text-on-surface">Categories Overview</h2>
-            <div className="card p-5 flex flex-col gap-6 bg-surface-container border border-outline-variant/20 h-full">
+            <h2 className="font-medium text-[14px] text-on-surface-variant px-0.5">
+              Spending by Category
+            </h2>
+            <div
+              className="p-5 flex flex-col gap-6 rounded-2xl h-full"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent)',
+              }}
+            >
               {showSkeleton ? (
                 <div className="flex flex-col gap-4">
-                  <div className="w-full h-[200px] bg-surface-container-high animate-pulse rounded-full max-w-[200px] mx-auto" />
-                  <div className="flex flex-col gap-2">
+                  <div className="w-[160px] h-[160px] skeleton rounded-full mx-auto" />
+                  <div className="flex flex-col gap-3">
                     {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="h-4 w-full bg-surface-container-high animate-pulse rounded"
-                      />
+                      <div key={i} className="h-4 w-full skeleton rounded" />
                     ))}
                   </div>
                 </div>
               ) : stats.breakdown.length > 0 ? (
                 <>
-                  <div className="relative h-[220px] w-full">
+                  <div className="relative h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -116,8 +114,8 @@ export default function Dashboard() {
                           nameKey="category"
                           cx="50%"
                           cy="50%"
-                          innerRadius={65}
-                          outerRadius={85}
+                          innerRadius={62}
+                          outerRadius={82}
                           paddingAngle={3}
                           stroke="none"
                         >
@@ -146,23 +144,23 @@ export default function Dashboard() {
                             )
                           }
                           contentStyle={{
-                            backgroundColor:
-                              'var(--surface-container-highest)',
-                            borderColor: 'var(--border)',
+                            backgroundColor: 'var(--surface-container-highest)',
+                            border: '1px solid var(--outline-variant)',
                             borderRadius: '12px',
                             fontSize: '12px',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                           }}
                           itemStyle={{ color: 'var(--on-surface)' }}
+                          labelStyle={{ color: 'var(--on-surface-variant)' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    {/* Center text */}
+                    {/* Center label */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                      <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold opacity-60">
                         Total
                       </span>
-                      <span className="font-mono text-[16px] text-on-surface font-semibold">
+                      <span className="font-mono text-[17px] text-on-surface font-bold mt-0.5">
                         {compactFormatter.format(stats.totalThisMonth)}
                       </span>
                     </div>
@@ -170,42 +168,55 @@ export default function Dashboard() {
 
                   {/* Breakdown list */}
                   <div className="flex flex-col gap-3">
-                    {stats.breakdown.map((item) => (
-                      <div
-                        key={item.category}
-                        className="flex justify-between items-center text-[14px]"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-3 h-3 rounded-full shrink-0"
-                            style={{
-                              backgroundColor:
-                                CATEGORY_COLORS[item.category] ||
-                                CATEGORY_COLORS['Other'],
-                            }}
-                          />
-                          <span className="text-on-surface-variant font-medium">
-                            {item.category}
-                          </span>
+                    {stats.breakdown.map((item) => {
+                      const pct = Math.round(
+                        (item.amount / stats.totalThisMonth) * 100
+                      );
+                      return (
+                        <div
+                          key={item.category}
+                          className="flex justify-between items-center text-[13.5px]"
+                        >
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <div
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{
+                                backgroundColor:
+                                  CATEGORY_COLORS[item.category] ||
+                                  CATEGORY_COLORS['Other'],
+                              }}
+                            />
+                            <span className="text-on-surface-variant font-medium truncate">
+                              {item.category}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0 ml-3">
+                            <span
+                              className="text-[12px] font-medium w-8 text-right"
+                              style={{ color: 'var(--outline)' }}
+                            >
+                              {pct}%
+                            </span>
+                            <span className="font-mono text-on-surface font-semibold text-[13px]">
+                              {currencyFormatter.format(item.amount)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-[12px] text-on-surface-variant opacity-60 w-8 text-right">
-                            {Math.round(
-                              (item.amount / stats.totalThisMonth) * 100
-                            )}
-                            %
-                          </span>
-                          <span className="font-mono text-on-surface font-medium">
-                            {currencyFormatter.format(item.amount)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-[200px] text-on-surface-variant text-[14px]">
-                  No expenses this month
+                <div className="flex flex-col items-center justify-center h-[200px] gap-3">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                    style={{ backgroundColor: 'var(--surface-container)' }}
+                  >
+                    📊
+                  </div>
+                  <p className="text-on-surface-variant text-[14px]">
+                    No expenses this month
+                  </p>
                 </div>
               )}
             </div>
@@ -213,17 +224,23 @@ export default function Dashboard() {
 
           {/* ── Daily Trend ── */}
           <div className="flex flex-col gap-2">
-            <h2 className="font-serif text-[18px] text-on-surface">
-              Daily Trend (7 Days)
+            <h2 className="font-medium text-[14px] text-on-surface-variant px-0.5">
+              Daily Spend — Last 7 Days
             </h2>
-            <div className="card h-[320px] lg:h-full min-h-[320px] p-4 pt-8 bg-surface-container border border-outline-variant/20">
+            <div
+              className="h-[320px] lg:h-full min-h-[300px] p-5 pt-7 rounded-2xl"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent)',
+              }}
+            >
               {showSkeleton ? (
-                <div className="w-full h-full bg-surface-container-high animate-pulse rounded-lg" />
+                <div className="w-full h-full skeleton rounded-xl" />
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={dailyData}
-                    margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
+                    margin={{ top: 20, right: 4, left: 4, bottom: 0 }}
                   >
                     <XAxis
                       dataKey="displayDate"
@@ -232,11 +249,15 @@ export default function Dashboard() {
                       tick={{
                         fontSize: 11,
                         fill: 'var(--on-surface-variant)',
+                        fontWeight: 500,
                       }}
-                      dy={10}
+                      dy={8}
                     />
                     <Tooltip
-                      cursor={{ fill: 'var(--surface-container-high)' }}
+                      cursor={{
+                        fill: 'color-mix(in srgb, var(--primary) 8%, transparent)',
+                        radius: 8,
+                      }}
                       formatter={(
                         value:
                           | number
@@ -253,21 +274,24 @@ export default function Dashboard() {
                       ]}
                       contentStyle={{
                         backgroundColor: 'var(--surface-container-highest)',
-                        borderColor: 'var(--border)',
+                        border: '1px solid var(--outline-variant)',
                         borderRadius: '12px',
                         fontSize: '12px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                       }}
                       labelStyle={{
                         color: 'var(--on-surface-variant)',
                         marginBottom: '4px',
+                        fontSize: '11px',
                       }}
+                      itemStyle={{ color: 'var(--on-surface)', fontWeight: 600 }}
                     />
                     <Bar
                       dataKey="amount"
                       fill="var(--primary)"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={40}
+                      radius={[6, 6, 3, 3]}
+                      maxBarSize={36}
+                      opacity={0.85}
                     >
                       <LabelList
                         dataKey="amount"
@@ -281,7 +305,7 @@ export default function Dashboard() {
                         style={{
                           fontSize: '10px',
                           fill: 'var(--on-surface-variant)',
-                          fontWeight: 500,
+                          fontWeight: 600,
                         }}
                         dy={-4}
                       />

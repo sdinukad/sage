@@ -236,9 +236,18 @@ export default function ChatPage() {
     */
     <div className="flex flex-col h-full">
       {/* ── Desktop top bar ── */}
-      <div className="hidden lg:flex items-center gap-3 px-6 py-4 border-b border-outline-variant/20 shrink-0">
-        <div className="w-8 h-8 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container">
-          <Sparkles size={16} />
+      <div
+        className="hidden lg:flex items-center gap-3 px-6 py-4 shrink-0"
+        style={{
+          borderBottom: '1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent)',
+          backgroundColor: 'var(--surface)',
+        }}
+      >
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: 'var(--primary-container)', color: 'var(--on-primary-container)' }}
+        >
+          <Sparkles size={16} strokeWidth={2} />
         </div>
         <div>
           <h1 className="font-serif text-[17px] font-semibold text-on-surface leading-tight">
@@ -259,8 +268,11 @@ export default function ChatPage() {
         {messages.length === 0 && (
           <div className="flex flex-col gap-6 mt-4 lg:mt-10 animate-[fadeSlideUp_0.4s_ease-out]">
             <div className="flex flex-col items-center text-center gap-2 mb-4">
-              <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
-                <Sparkles size={32} />
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
+                style={{ backgroundColor: 'var(--primary-container)', color: 'var(--on-primary-container)' }}
+              >
+                <Sparkles size={30} strokeWidth={1.5} />
               </div>
               <h2 className="font-serif text-[24px] lg:text-[28px] text-on-surface">
                 Hello, I&apos;m Sage
@@ -270,20 +282,35 @@ export default function ChatPage() {
               </p>
             </div>
 
-            {/* Suggested prompts — 2-col grid on desktop */}
+            {/* Suggested prompts */}
             <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
-              <p className="text-[12px] font-medium text-on-surface-variant uppercase tracking-wider ml-1">
-                Suggested:
+              <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">
+                Suggested
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {examplePrompts.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    className="px-5 py-3.5 bg-surface-container border border-outline-variant text-on-surface rounded-2xl text-[14px] font-medium text-left active:scale-[0.98] transition-all hover:border-primary group flex items-center justify-between"
+                    className="px-4 py-3.5 rounded-2xl text-[14px] font-medium text-left transition-all group flex items-center justify-between"
+                    style={{
+                      backgroundColor: 'var(--surface-container)',
+                      color: 'var(--on-surface)',
+                      border: '1px solid color-mix(in srgb, var(--outline-variant) 60%, transparent)',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--surface-container-high)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--surface-container)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--outline-variant) 60%, transparent)';
+                    }}
                   >
-                    {prompt}
-                    <span className="text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                    <span>{prompt}</span>
+                    <span
+                      className="text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0 font-bold"
+                    >
                       →
                     </span>
                   </button>
@@ -394,15 +421,27 @@ export default function ChatPage() {
       </div>
 
       {/* ── Input Area ── */}
-      <div className="shrink-0 bg-surface/90 backdrop-blur-md border-t border-outline-variant/20 p-3 lg:px-6">
-        <div className="max-w-3xl mx-auto flex items-center gap-3 px-3 py-2 bg-surface-container border border-outline-variant/30 rounded-[24px]">
+      <div
+        className="shrink-0 backdrop-blur-md p-3 pb-[calc(64px+env(safe-area-inset-bottom)+4px)] lg:pb-3 lg:px-6"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--surface) 95%, transparent)',
+          borderTop: '1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent)',
+        }}
+      >
+        <div
+          className="max-w-3xl mx-auto flex items-center gap-3 px-3 py-2 rounded-[24px]"
+          style={{
+            backgroundColor: 'var(--surface-container)',
+            border: '1.5px solid var(--outline-variant)',
+          }}
+        >
           <textarea
             ref={textareaRef}
             rows={1}
             placeholder={
               isOffline
-                ? 'You are offline. Reconnect to chat...'
-                : 'Log an expense or ask about your finances...'
+                ? 'You are offline. Reconnect to chat…'
+                : 'Log an expense or ask about your finances…'
             }
             value={input}
             disabled={isOffline || loading}
@@ -417,17 +456,27 @@ export default function ChatPage() {
                 handleSend();
               }
             }}
-            className="flex-1 bg-transparent border-none py-1.5 text-[15px] text-on-surface outline-none resize-none no-scrollbar font-sans placeholder:text-on-surface-variant/50"
+            className="flex-1 bg-transparent border-none py-1.5 text-[15px] text-on-surface outline-none resize-none no-scrollbar font-sans"
+            style={{ color: 'var(--on-surface)' }}
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || loading || isOffline}
-            className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0 active:scale-95 disabled:opacity-40 transition-all shadow-md hover:opacity-90"
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+            style={{
+              backgroundColor: input.trim() && !loading && !isOffline
+                ? 'var(--primary)'
+                : 'var(--surface-container-high)',
+              color: input.trim() && !loading && !isOffline
+                ? 'var(--on-primary)'
+                : 'var(--on-surface-variant)',
+              opacity: !input.trim() || loading || isOffline ? 0.5 : 1,
+            }}
           >
-            <Send size={18} className="fill-current" strokeWidth={2.5} />
+            <Send size={17} strokeWidth={2.5} />
           </button>
         </div>
-        <p className="hidden lg:block text-center text-[11px] text-on-surface-variant/40 mt-2">
+        <p className="hidden lg:block text-center text-[11px] mt-2" style={{ color: 'var(--on-surface-variant)', opacity: 0.4 }}>
           Press <kbd className="font-mono">Enter</kbd> to send · <kbd className="font-mono">Shift+Enter</kbd> for new line
         </p>
       </div>

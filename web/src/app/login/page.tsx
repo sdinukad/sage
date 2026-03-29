@@ -32,55 +32,85 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-dvh bg-surface-container max-w-md mx-auto relative overflow-hidden">
-      {/* Top Panel (35%) */}
-      <div className="h-[35vh] flex flex-col items-center justify-center text-center px-6">
-        <h1 className="font-serif text-[44px] text-white leading-none mb-2">Sage</h1>
-        <p className="text-sage-300 text-sm font-sans">Your money, made clear.</p>
-      </div>
-
-      {/* Bottom Card (65%) */}
-      <div className="flex-1 bg-surface rounded-t-[28px] mt-[-20px] z-10 p-8 flex flex-col">
-        <h2 className="font-serif text-[26px] text-on-surface mb-1">Welcome back</h2>
-        <p className="text-ink-2 text-sm mb-8">Log in to your account to continue</p>
-
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Email</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`input-field ${error ? 'border-negative' : ''}`}
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`input-field ${error ? 'border-negative' : ''}`}
-              required
-            />
-          </div>
-
-          {error && <p className="text-negative text-[12px] mt-1 ml-1">{error}</p>}
-
-          <button type="submit" className="btn-primary w-full mt-4" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
-
-        <div className="mt-auto pt-8 text-center">
-          <Link href="/register" className="text-primary text-sm font-medium">
-            Don&apos;t have an account? Register
-          </Link>
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md animate-[fadeSlideUp_0.4s_ease-out]">
+        {/* Brand header */}
+        <div className="text-center mb-10">
+          <h1 className="font-serif text-[42px] leading-none text-on-surface mb-2">Sage</h1>
+          <p className="text-[14px] text-on-surface-variant">Your money, made clear.</p>
         </div>
+
+        {/* Form card */}
+        <div className="bg-surface rounded-3xl p-8 shadow-lg border border-outline-variant/30">
+          <div className="mb-7">
+            <h2 className="font-serif text-[24px] text-on-surface mb-1">Welcome back</h2>
+            <p className="text-[14px] text-on-surface-variant">Log in to continue to Sage</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-[13px] font-medium text-on-surface-variant">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="password" className="text-[13px] font-medium text-on-surface-variant">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && (
+              <div className="px-4 py-3 rounded-xl text-[13px] font-medium"
+                style={{ backgroundColor: 'var(--error-container)', color: 'var(--on-error-container)' }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn-primary w-full mt-1 py-3.5"
+              disabled={loading}
+            >
+              {loading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              href="/register"
+              className="text-[14px] font-medium transition-opacity hover:opacity-75"
+              style={{ color: 'var(--primary)' }}
+            >
+              Don&apos;t have an account? Create one
+            </Link>
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <p className="text-center text-[12px] text-on-surface-variant/50 mt-6">
+          Sage · Personal Finance AI
+        </p>
       </div>
     </div>
   );

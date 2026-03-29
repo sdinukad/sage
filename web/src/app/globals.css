@@ -3,113 +3,126 @@
 @tailwind utilities;
 
 :root {
-  /* Light Mode Palette */
-  --background: #faf9f6;
-  --surface: #faf9f6;
-  --surface-bright: #faf9f6;
-  --surface-container: #ecefe9;
-  --surface-container-high: #e5e9e3;
-  --surface-container-highest: #dee4dc;
-  --surface-container-low: #f3f4ef;
-  --surface-container-lowest: #ffffff;
-  --surface-dim: #d5dcd3;
-  --surface-tint: #516354;
-  --surface-variant: #dee4dc;
-  
-  --on-background: #2e342f;
-  --on-surface: #2e342f;
-  --on-surface-variant: #5a615b;
-  --outline: #767c76;
-  --outline-variant: #adb4ac;
-  
-  --primary: #516354;
-  --primary-container: #d3e8d5;
-  --primary-dim: #455749;
-  --primary-fixed: #d3e8d5;
-  --primary-fixed-dim: #c5dac7;
-  --on-primary: #e9fdea;
-  --on-primary-container: #445648;
-  --on-primary-fixed: #324336;
-  --on-primary-fixed-variant: #4e6051;
-  
-  --secondary: #536354;
-  --secondary-container: #d5e7d4;
-  --secondary-dim: #475749;
-  --secondary-fixed: #d5e7d4;
-  --secondary-fixed-dim: #c7d9c6;
-  --on-secondary: #ebfeea;
-  --on-secondary-container: #455647;
-  --on-secondary-fixed: #334335;
-  --on-secondary-fixed-variant: #4f6051;
-  
-  --tertiary: #5c605b;
-  --tertiary-container: #f2f5ee;
-  --tertiary-dim: #505450;
-  --tertiary-fixed: #f2f5ee;
-  --tertiary-fixed-dim: #e3e6e0;
-  --on-tertiary: #f7faf3;
-  --on-tertiary-container: #595d58;
-  --on-tertiary-fixed: #474b46;
-  --on-tertiary-fixed-variant: #636762;
+  /* ── Light Mode Palette — warm sage-green tint ── */
+  --background: #eef2ee;
+  --surface: #f7faf7;
+  --surface-bright: #ffffff;
+  --surface-container: #e4ebe4;
+  --surface-container-high: #d8e4d8;
+  --surface-container-highest: #ccdacc;
+  --surface-container-low: #eef3ee;
+  --surface-container-lowest: #f7faf7;
+  --surface-dim: #c4cfc4;
+  --surface-tint: #4a6550;
+  --surface-variant: #d4e3d4;
+
+  --on-background: #1a201b;
+  --on-surface: #1a201b;
+  --on-surface-variant: #4a524a;
+  --outline: #637063;
+  --outline-variant: #94ac94;
+
+  --primary: #2d5c3a;
+  --primary-container: #aad8b4;
+  --primary-dim: #234830;
+  --primary-fixed: #aad8b4;
+  --primary-fixed-dim: #95c9a0;
+  --on-primary: #ffffff;
+  --on-primary-container: #001d0c;
+  --on-primary-fixed: #001d0c;
+  --on-primary-fixed-variant: #1b4427;
+
+  --secondary: #476149;
+  --secondary-container: #c6e2c8;
+  --secondary-dim: #38503a;
+  --secondary-fixed: #c6e2c8;
+  --secondary-fixed-dim: #aaccae;
+  --on-secondary: #ffffff;
+  --on-secondary-container: #071e0b;
+  --on-secondary-fixed: #071e0b;
+  --on-secondary-fixed-variant: #304833;
+
+  --tertiary: #52594f;
+  --tertiary-container: #d6e2d3;
+  --tertiary-dim: #454c43;
+  --tertiary-fixed: #d6e2d3;
+  --tertiary-fixed-dim: #bacaba;
+  --on-tertiary: #ffffff;
+  --on-tertiary-container: #101810;
+  --on-tertiary-fixed: #101810;
+  --on-tertiary-fixed-variant: #3a403a;
+
+  /* Error */
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+  --on-error-container: #410002;
 }
 
 .dark {
-  --background: #121212;
-  --surface: #121412;
-  --surface-bright: #383a38;
-  --surface-container: #1e201e;
-  --surface-container-high: #262826;
-  --surface-container-highest: #313331;
-  --surface-container-low: #1a1c1a;
-  --surface-container-lowest: #0d0f0d;
-  --surface-dim: #0f110f;
-  --surface-tint: #8bb092;
-  --surface-variant: #313331;
+  /* ── Dark Mode Palette — Improved Contrast ── */
+  --background: #0f1110;
+  --surface: #191c19;
+  --surface-bright: #3a3d3a;
+  --surface-container: #222522;
+  --surface-container-high: #2c302c;
+  --surface-container-highest: #373b37;
+  --surface-container-low: #1c1f1c;
+  --surface-container-lowest: #0a0d0a;
+  --surface-dim: #0f1110;
+  --surface-tint: #8fbf97;
+  --surface-variant: #3a3d3a;
   
-  --on-background: #e2e4e2;
-  --on-surface: #e2e4e2;
-  --on-surface-variant: #c1c9c1;
-  --outline: #8a918a;
-  --outline-variant: #404841;
+  --on-background: #dfe3de;
+  --on-surface: #dfe3de;
+  --on-surface-variant: #bec7bc;
+  --outline: #898f89;
+  --outline-variant: #404740;
   
-  --primary: #a0d2a4;
-  --primary-container: #2c4631;
-  --primary-dim: #8bb092;
-  --primary-fixed: #bcfeba;
-  --primary-fixed-dim: #a0d2a4;
-  --on-primary: #00390f;
-  --on-primary-container: #bcfeba;
-  --on-primary-fixed: #002106;
-  --on-primary-fixed-variant: #11511f;
+  --primary: #8fbf97;
+  --primary-container: #24472c;
+  --primary-dim: #76a87e;
+  --primary-fixed: #bce3c5;
+  --primary-fixed-dim: #8fbf97;
+  --on-primary: #003919;
+  --on-primary-container: #bce3c5;
+  --on-primary-fixed: #002111;
+  --on-primary-fixed-variant: #1e4a28;
   
-  --secondary: #b3ccb3;
-  --secondary-container: #334b35;
-  --secondary-dim: #98b098;
-  --secondary-fixed: #cee8ce;
-  --secondary-fixed-dim: #b3ccb3;
-  --on-secondary: #1d351f;
-  --on-secondary-container: #cee8ce;
-  --on-secondary-fixed: #08200b;
-  --on-secondary-fixed-variant: #263e29;
+  --secondary: #b5c9b7;
+  --secondary-container: #2d4030;
+  --secondary-dim: #9baf9e;
+  --secondary-fixed: #d2e8d4;
+  --secondary-fixed-dim: #b5c9b7;
+  --on-secondary: #1f3523;
+  --on-secondary-container: #d2e8d4;
+  --on-secondary-fixed: #0d2112;
+  --on-secondary-fixed-variant: #243828;
   
-  --tertiary: #c2c8c1;
-  --tertiary-container: #3e443e;
-  --tertiary-dim: #a6aca5;
-  --tertiary-fixed: #dee4dd;
-  --tertiary-fixed-dim: #c2c8c1;
-  --on-tertiary: #2c322b;
-  --on-tertiary-container: #dee4dd;
-  --on-tertiary-fixed: #171d17;
-  --on-tertiary-fixed-variant: #383e38;
+  --tertiary: #c1c9be;
+  --tertiary-container: #3c4439;
+  --tertiary-dim: #a5aea2;
+  --tertiary-fixed: #e1e8de;
+  --tertiary-fixed-dim: #c1c9be;
+  --on-tertiary: #2b322b;
+  --on-tertiary-container: #e1e8de;
+  --on-tertiary-fixed: #151e14;
+  --on-tertiary-fixed-variant: #363d35;
+
+  /* Error */
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
 }
 
 @layer base {
   :root {
     --border: var(--outline-variant);
-
     --font-serif: var(--font-manrope);
     --font-sans: var(--font-inter);
     --font-mono: var(--font-dm-mono);
+    --sidebar-width: 240px;
   }
 }
 
@@ -141,51 +154,103 @@ body {
   height: calc(56px + env(safe-area-inset-top));
 }
 
-/* Desktop sidebar scrollbar */
-:root {
-  --sidebar-width: 240px;
-}
-
-/* Component Classes */
+/* ── Component Classes ── */
 @layer components {
   .btn-primary {
     @apply flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-200;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--on-primary-container) 100%);
+    background-color: var(--primary);
     color: var(--on-primary);
     touch-action: manipulation;
     user-select: none;
+    letter-spacing: 0.01em;
+  }
+  
+  .btn-primary:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
   
   .btn-primary:active {
-    transform: scale(0.96);
-    opacity: 0.9;
+    transform: scale(0.97);
+    opacity: 0.85;
   }
 
+  .btn-primary:disabled {
+    opacity: 0.5;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* Input field — improved visibility in both modes */
   .input-field {
-    @apply w-full px-4 py-3 rounded-full transition-all duration-200 outline-none;
-    background-color: var(--surface-container-highest);
-    border: 1px solid rgba(68, 71, 72, 0.1); /* Ghost border */
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none;
+    background-color: var(--surface-container);
+    border: 1.5px solid var(--outline-variant);
     color: var(--on-surface);
     font-size: 15px;
+    font-family: var(--font-sans);
+  }
+
+  .input-field::placeholder {
+    color: var(--on-surface-variant);
+    opacity: 0.55;
   }
 
   .input-field:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(74, 225, 131, 0.1);
+    background-color: var(--surface-container-low);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+
+  .input-field:hover:not(:focus) {
+    border-color: var(--outline);
+  }
+
+  /* Select fields */
+  select.input-field {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a736a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  .dark select.input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23898f89' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
   .card {
-    @apply rounded-xl transition-all duration-200 overflow-hidden;
+    @apply rounded-2xl transition-all duration-200 overflow-hidden;
     background-color: var(--surface-container);
-    border: none;
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 70%, transparent);
+  }
+
+  /* Elevated card variant */
+  .card-elevated {
+    @apply rounded-2xl transition-all duration-200 overflow-hidden;
+    background-color: var(--surface);
+    border: 1px solid var(--outline-variant);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+  
+  .dark .card-elevated {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
   }
   
   .ghost-border {
-    border: 1px solid rgba(68, 71, 72, 0.15); /* outline-variant at 15% opacity */
+    border: 1.5px solid var(--outline-variant);
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em];
+    color: var(--on-surface-variant);
+    opacity: 0.75;
   }
 }
 
-/* Typography */
+/* ── Typography ── */
 h1, h2, h3, .font-serif {
   font-family: var(--font-serif);
 }
@@ -194,7 +259,7 @@ h1, h2, h3, .font-serif {
   font-family: var(--font-mono);
 }
 
-/* Transitions */
+/* ── Page Animations ── */
 .page-transition-enter {
   opacity: 0;
 }
@@ -203,38 +268,10 @@ h1, h2, h3, .font-serif {
   transition: opacity 200ms ease;
 }
 
-/* Animations & Interactions */
+/* ── Micro Animations ── */
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes typingDot {
-  0%, 80%, 100% {
-    transform: scale(0.6);
-    opacity: 0.4;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--on-surface-variant);
-  /* !important exempts this essential micro-interaction from global prefers-reduced-motion so you can see it! */
-  animation: typingDot 1.4s infinite ease-in-out both !important;
-}
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
-.typing-dot:nth-child(3) { animation-delay: 0s; }
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
 }
 
 @keyframes fadeIn {
@@ -242,6 +279,45 @@ h1, h2, h3, .font-serif {
   to { opacity: 1; }
 }
 
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes typingDot {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.35;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dotPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+/* ── Typing indicator dots ── */
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: typingDot 1.4s infinite ease-in-out both !important;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0s; }
+
+/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -251,7 +327,7 @@ h1, h2, h3, .font-serif {
   }
 }
 
-/* Custom Scrollbars */
+/* ── Scrollbars ── */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -260,7 +336,6 @@ h1, h2, h3, .font-serif {
   scrollbar-width: none;
 }
 
-/* Thin scrollbar for desktop sidebar / overflow panels */
 .thin-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -276,7 +351,40 @@ h1, h2, h3, .font-serif {
   scrollbar-color: var(--outline-variant) transparent;
 }
 
-/* Ensure page fills viewport on desktop */
+/* ── Filter pills horizontal scroll (desktop: show thin bar on hover, mobile: hidden) ── */
+.filter-scroll {
+  /* Touch devices: keep scrollbar hidden */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.filter-scroll::-webkit-scrollbar {
+  display: none;
+}
+/* Non-touch (desktop pointer) devices: show a slim scrollbar on hover */
+@media (hover: hover) and (pointer: fine) {
+  .filter-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--outline-variant) transparent;
+  }
+  .filter-scroll::-webkit-scrollbar {
+    display: block;
+    height: 3px;
+  }
+  .filter-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .filter-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--outline-variant);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .filter-scroll:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+  }
+}
+
+/* ── Desktop viewport fill ── */
 @media (min-width: 1024px) {
   html, body {
     height: 100%;
@@ -286,8 +394,32 @@ h1, h2, h3, .font-serif {
   }
 }
 
-/* Sidebar active nav dot animation */
-@keyframes dotPop {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+/* ── Auth pages — full-height on desktop ── */
+.auth-page-desktop {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* ── Chat page: ensures input area clears the mobile bottom nav ── */
+.chat-main {
+  /* On mobile, the fixed bottom nav (64px + safe area) overlaps content */
+  max-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 1024px) {
+  .chat-main {
+    /* On desktop there is no bottom nav — remove the constraint */
+    max-height: none;
+  }
+}
+
+/* ── Skeleton shimmer animation ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-container) 0%,
+    var(--surface-container-high) 50%,
+    var(--surface-container) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }

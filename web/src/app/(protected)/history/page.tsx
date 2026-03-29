@@ -83,23 +83,35 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-background">
-      {/* ── Page heading (visible on desktop; mobile header is in AppShell) ── */}
-      <div className="px-4 lg:px-8 pt-4 lg:pt-8 pb-2 flex items-center justify-between">
+      {/* ── Page heading ── */}
+      <div className="px-4 lg:px-8 pt-4 lg:pt-8 pb-3 flex items-center justify-between">
         <div>
           <h1 className="font-serif text-[24px] lg:text-[26px] font-semibold text-on-surface">
             History
           </h1>
           <p className="hidden lg:block text-[13px] text-on-surface-variant mt-0.5">
-            All your transactions
+            All transactions, latest first
           </p>
         </div>
-        <div className="text-[12px] text-on-surface-variant font-medium uppercase tracking-wider">
+        <div
+          className="text-[12px] font-semibold px-2.5 py-1 rounded-full"
+          style={{
+            backgroundColor: 'var(--surface-container)',
+            color: 'var(--on-surface-variant)',
+          }}
+        >
           {filteredData.length} entries
         </div>
       </div>
 
-      {/* ── Filters ── */}
-      <div className="sticky top-0 lg:top-0 z-30 bg-background/95 backdrop-blur-md border-b border-outline-variant/10 pb-2">
+      {/* ── Filters strip ── */}
+      <div
+        className="sticky top-0 lg:top-0 z-30 backdrop-blur-md pb-2"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--background) 96%, transparent)',
+          borderBottom: '1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent)',
+        }}
+      >
         <FilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
         {/* Date range */}
@@ -113,10 +125,10 @@ export default function HistoryPage() {
             placeholder="Start date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="flex-1 max-w-[200px] bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary transition-colors"
+            className="flex-1 max-w-[180px] input-field py-2 text-[13.5px] rounded-lg"
             title="Start Date"
           />
-          <span className="text-on-surface-variant font-medium">–</span>
+          <span className="text-on-surface-variant">—</span>
           <input
             type="text"
             onFocus={(e) => (e.target.type = 'date')}
@@ -126,7 +138,7 @@ export default function HistoryPage() {
             placeholder="End date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="flex-1 max-w-[200px] bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary transition-colors"
+            className="flex-1 max-w-[180px] input-field py-2 text-[13.5px] rounded-lg"
             title="End Date"
           />
           {(startDate || endDate) && (
@@ -135,7 +147,8 @@ export default function HistoryPage() {
                 setStartDate('');
                 setEndDate('');
               }}
-              className="text-[12px] font-medium text-primary ml-1 hover:opacity-80 transition-opacity"
+              className="text-[12px] font-semibold transition-opacity hover:opacity-70"
+              style={{ color: 'var(--primary)' }}
             >
               Clear
             </button>
@@ -158,31 +171,45 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : groupedData.length > 0 ? (
-          /* Desktop: 2-col if wide enough (optional future enhancement) */
           <div className="flex flex-col gap-8 max-w-5xl">
             {groupedData.map(([monthYear, { total, items }]) => (
-              <div key={monthYear} className="flex flex-col gap-3">
+              <div key={monthYear} className="flex flex-col gap-2.5">
+                {/* Month header */}
                 <div className="flex items-center justify-between px-1">
-                  <h2 className="font-serif text-[18px] text-on-surface">
+                  <h2 className="font-serif text-[18px] font-semibold text-on-surface">
                     {monthYear}
                   </h2>
                   <span
-                    className={`font-mono text-[14px] font-medium ${
-                      total >= 0 ? 'text-green-600' : 'text-on-surface-variant'
-                    }`}
+                    className="font-mono text-[13px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{
+                      color: total >= 0 ? '#16a34a' : 'var(--on-surface-variant)',
+                      backgroundColor: total >= 0
+                        ? 'rgba(22, 163, 74, 0.1)'
+                        : 'var(--surface-container)',
+                    }}
                   >
-                    {total >= 0 ? '+' : ''}
-                    {currencyFormatter.format(total)}
+                    {total >= 0 ? '+' : ''}{currencyFormatter.format(total)}
                   </span>
                 </div>
 
-                <div className="card overflow-hidden divide-y divide-outline-variant/20">
-                  {items.map((item) => (
+                {/* Transaction card */}
+                <div
+                  className="overflow-hidden rounded-2xl"
+                  style={{
+                    border: '1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent)',
+                  }}
+                >
+                  {items.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="relative group overflow-hidden"
+                      className="relative overflow-hidden"
+                      style={{
+                        borderTop: idx > 0
+                          ? '1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent)'
+                          : 'none',
+                      }}
                     >
-                      {/* Action overlay */}
+                      {/* Swipe action overlay */}
                       <div
                         className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${
                           swipedId === item.id
@@ -191,33 +218,45 @@ export default function HistoryPage() {
                         }`}
                       >
                         <div
-                          className="w-1/2 bg-blue-500 flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors"
+                          className="w-1/2 flex items-center justify-center text-white cursor-pointer transition-colors"
+                          style={{ backgroundColor: '#3b82f6' }}
+                          onMouseEnter={(e) =>
+                            ((e.currentTarget as HTMLElement).style.backgroundColor = '#2563eb')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.currentTarget as HTMLElement).style.backgroundColor = '#3b82f6')
+                          }
                           onClick={() => {
                             setEditingItem(item);
                             setSwipedId(null);
                           }}
                         >
-                          <Edit2 size={24} />
+                          <Edit2 size={22} strokeWidth={2} />
                         </div>
                         <div
-                          className="w-1/2 bg-red-500 flex items-center justify-center text-white cursor-pointer hover:bg-red-600 transition-colors"
+                          className="w-1/2 flex items-center justify-center text-white cursor-pointer transition-colors"
+                          style={{ backgroundColor: 'var(--error)' }}
+                          onMouseEnter={(e) =>
+                            ((e.currentTarget as HTMLElement).style.opacity = '0.85')
+                          }
+                          onMouseLeave={(e) =>
+                            ((e.currentTarget as HTMLElement).style.opacity = '1')
+                          }
                           onClick={() => handleDelete(item.id, item.type)}
                         >
-                          <Trash2 size={24} />
+                          <Trash2 size={22} strokeWidth={2} />
                         </div>
                       </div>
 
                       {/* Row */}
                       <div
-                        className={`transition-transform duration-200 bg-surface ${
+                        className={`transition-transform duration-200 ${
                           swipedId === item.id
                             ? '-translate-x-[160px]'
                             : 'translate-x-0'
                         }`}
                         onClick={() =>
-                          setSwipedId(
-                            swipedId === item.id ? null : item.id
-                          )
+                          setSwipedId(swipedId === item.id ? null : item.id)
                         }
                       >
                         <ExpenseRow
@@ -237,12 +276,21 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
-            <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
-              <ReceiptText size={32} />
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-1"
+              style={{
+                backgroundColor: 'var(--surface-container)',
+                color: 'var(--on-surface-variant)',
+              }}
+            >
+              <ReceiptText size={28} strokeWidth={1.5} />
             </div>
-            <p className="text-on-surface-variant text-[14px] font-medium">
+            <p className="font-medium text-on-surface text-[15px]">
               No transactions found
+            </p>
+            <p className="text-on-surface-variant text-[13px]">
+              Try changing your filters or date range
             </p>
           </div>
         )}
