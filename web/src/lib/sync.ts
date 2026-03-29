@@ -158,6 +158,7 @@ export async function pushLocalData() {
   if (pendingExpenses.length > 0) {
     const toUpsert = pendingExpenses
       .filter(e => e.sync_status === 'pending_insert' || e.sync_status === 'pending_update')
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .map(({ sync_status, ...rest }) => rest);
     
     if (toUpsert.length > 0) {
@@ -188,6 +189,7 @@ export async function pushLocalData() {
   if (pendingIncomes.length > 0) {
     const toUpsert = pendingIncomes
       .filter(i => i.sync_status === 'pending_insert' || i.sync_status === 'pending_update')
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .map(({ sync_status, ...rest }) => rest);
     
     if (toUpsert.length > 0) {

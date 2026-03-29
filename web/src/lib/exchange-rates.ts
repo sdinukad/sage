@@ -176,7 +176,7 @@ async function fetchFromAPI(
       });
 
     return rates;
-  } catch (err) {
+  } catch {
     console.warn(`[Currency] Frankfurter failed for ${baseCurrency}, trying fallback provider...`);
     return fetchFromFallbackAPI(baseCurrency);
   }

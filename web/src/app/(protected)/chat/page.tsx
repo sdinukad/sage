@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Expense, Income, ChatAction, ChatResponse } from '@/shared/models';
 import { Send, Sparkles } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';

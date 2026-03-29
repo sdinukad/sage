@@ -32,7 +32,7 @@ const db = new Dexie('SageLocalDB') as Dexie & {
   expenses: EntityTable<LocalExpense, 'id'>;
   incomes: EntityTable<LocalIncome, 'id'>;
   categories: EntityTable<LocalCategory, 'id'>;
-  exchange_rates: EntityTable<LocalExchangeRate, '[from_currency+to_currency+date]'>;
+  exchange_rates: EntityTable<LocalExchangeRate, 'from_currency'>;
 };
 
 // v2: Original schema

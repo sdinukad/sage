@@ -184,7 +184,7 @@ export default function ProfilePage() {
                   ))}
                   {filteredCurrencies.length === 0 && (
                     <div className="col-span-full py-8 text-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/30">
-                      <p className="text-[12px] text-on-surface-variant font-medium">No currencies found matching "{searchQuery}"</p>
+                      <p className="text-[12px] text-on-surface-variant font-medium">No currencies found matching &quot;{searchQuery}&quot;</p>
                     </div>
                   )}
                 </div>
