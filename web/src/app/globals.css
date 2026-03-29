@@ -130,14 +130,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Safe Area Paddings */
+/* Safe Area Paddings — mobile only */
 .bottom-nav {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
+/* Mobile sticky header with safe area */
 .sticky-header {
   padding-top: env(safe-area-inset-top);
   height: calc(56px + env(safe-area-inset-top));
+}
+
+/* Desktop sidebar scrollbar */
+:root {
+  --sidebar-width: 240px;
 }
 
 /* Component Classes */
@@ -252,4 +258,36 @@ h1, h2, h3, .font-serif {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Thin scrollbar for desktop sidebar / overflow panels */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--outline-variant);
+  border-radius: 4px;
+}
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-variant) transparent;
+}
+
+/* Ensure page fills viewport on desktop */
+@media (min-width: 1024px) {
+  html, body {
+    height: 100%;
+  }
+  #__next {
+    height: 100%;
+  }
+}
+
+/* Sidebar active nav dot animation */
+@keyframes dotPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

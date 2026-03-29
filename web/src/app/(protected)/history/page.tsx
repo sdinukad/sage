@@ -6,65 +6,62 @@ import { Expense, Income } from '@/shared/models';
 import ExpenseRow from '@/components/ExpenseRow';
 import FilterPills from '@/components/FilterPills';
 import { format, parseISO } from 'date-fns';
-import { Trash2, Edit2 } from 'lucide-react';
+import { Trash2, Edit2, ReceiptText } from 'lucide-react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 import dynamic from 'next/dynamic';
 
-const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), { ssr: false });
+const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), {
+  ssr: false,
+});
 
-const currencyFormatter = new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 });
+const currencyFormatter = new Intl.NumberFormat('en-LK', {
+  style: 'currency',
+  currency: 'LKR',
+  maximumFractionDigits: 0,
+});
 
 export default function HistoryPage() {
-  const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched } = useExpenseData();
+  const { expenses: allExpenses, incomes: allIncomes, loading, hasFetched } =
+    useExpenseData();
   const [activeFilter, setActiveFilter] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [swipedId, setSwipedId] = useState<string | null>(null);
-  const [editingItem, setEditingItem] = useState<(Expense | Income) & { type?: 'expense' | 'income' } | null>(null);
+  const [editingItem, setEditingItem] = useState<
+    (Expense | Income) & { type?: 'expense' | 'income' } | null
+  >(null);
 
-  // Merge and tag types
   const allData = useMemo(() => {
-    const exps = allExpenses.map(e => ({ ...e, type: 'expense' as const }));
-    const incs = allIncomes.map(i => ({ ...i, type: 'income' as const }));
-    return [...exps, ...incs];
+    const exps = allExpenses.map((e) => ({ ...e, type: 'expense' as const }));
+    const incs = allIncomes.map((i) => ({ ...i, type: 'income' as const }));
+    return [...exps, ...incs].sort((a, b) => b.date.localeCompare(a.date));
   }, [allExpenses, allIncomes]);
 
-  // Only show skeletons on the very first load before any data arrives
   const showSkeleton = loading && !hasFetched;
 
-  // Filter items locally
   const filteredData = useMemo(() => {
     let result = allData;
-    
     if (activeFilter !== 'All') {
-      result = result.filter(e => e.category === activeFilter);
+      result = result.filter((e) => e.category === activeFilter);
     }
-    
-    if (startDate) {
-      result = result.filter(e => e.date >= startDate);
-    }
-    
-    if (endDate) {
-      result = result.filter(e => e.date <= endDate);
-    }
-    
+    if (startDate) result = result.filter((e) => e.date >= startDate);
+    if (endDate) result = result.filter((e) => e.date <= endDate);
     return result;
   }, [allData, activeFilter, startDate, endDate]);
 
   const handleDelete = async (id: string, type: 'expense' | 'income') => {
-    if (type === 'expense') {
-      await syncDeleteExpense(id);
-    } else {
-      await syncDeleteIncome(id);
-    }
+    if (type === 'expense') await syncDeleteExpense(id);
+    else await syncDeleteIncome(id);
     setSwipedId(null);
   };
 
-  // Grouping logic
   const groupedData = useMemo(() => {
-    const groups: Record<string, { total: number; items: (Expense & { type: 'expense' | 'income' })[] }> = {};
-    
-    filteredData.forEach(item => {
+    const groups: Record<
+      string,
+      { total: number; items: (Expense & { type: 'expense' | 'income' })[] }
+    > = {};
+
+    filteredData.forEach((item) => {
       const monthYear = format(parseISO(item.date), 'MMMM yyyy');
       if (!groups[monthYear]) {
         groups[monthYear] = { total: 0, items: [] };
@@ -76,91 +73,124 @@ export default function HistoryPage() {
         groups[monthYear].total += Number(item.amount);
       }
     });
-    
-    return Object.entries(groups).sort((a, b) => {
-      return new Date(b[1].items[0].date).getTime() - new Date(a[1].items[0].date).getTime();
-    });
+
+    return Object.entries(groups).sort(
+      (a, b) =>
+        new Date(b[1].items[0].date).getTime() -
+        new Date(a[1].items[0].date).getTime()
+    );
   }, [filteredData]);
 
   return (
-    <div className="flex flex-col min-h-dvh bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-4 h-[64px] flex items-center justify-between border-b border-border">
-        <h1 className="font-serif text-[24px] font-semibold text-on-surface">History</h1>
-        <div className="text-[12px] text-on-surface-variant font-medium uppercase tracking-wider">
-          {filteredData.length} Total
+    <div className="flex flex-col min-h-full bg-background">
+      {/* ── Page heading (visible on desktop; mobile header is in AppShell) ── */}
+      <div className="px-4 lg:px-8 pt-4 lg:pt-8 pb-2 flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-[24px] lg:text-[26px] font-semibold text-on-surface">
+            History
+          </h1>
+          <p className="hidden lg:block text-[13px] text-on-surface-variant mt-0.5">
+            All your transactions
+          </p>
         </div>
-      </header>
-
-      {/* Filter Bar */}
-      <FilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
-
-      {/* Date Range Filter */}
-      <div className="px-4 py-2 flex items-center gap-2">
-        <input 
-          type="text"
-          onFocus={(e) => (e.target.type = "date")}
-          onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-          placeholder="Start date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"
-          title="Start Date"
-        />
-        <span className="text-on-surface-variant font-medium">-</span>
-        <input 
-          type="text"
-          onFocus={(e) => (e.target.type = "date")}
-          onBlur={(e) => { if (!e.target.value) e.target.type = "text"; }}
-          placeholder="End date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="flex-1 bg-surface-container border border-border rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary"
-          title="End Date"
-        />
-        {(startDate || endDate) && (
-          <button 
-            onClick={() => { setStartDate(''); setEndDate(''); }}
-            className="text-[12px] font-medium text-primary ml-1"
-          >
-            Clear
-          </button>
-        )}
+        <div className="text-[12px] text-on-surface-variant font-medium uppercase tracking-wider">
+          {filteredData.length} entries
+        </div>
       </div>
 
-      {/* Expense List */}
-      <div className="flex-1 px-4 py-6 pb-24">
+      {/* ── Filters ── */}
+      <div className="sticky top-0 lg:top-0 z-30 bg-background/95 backdrop-blur-md border-b border-outline-variant/10 pb-2">
+        <FilterPills activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+
+        {/* Date range */}
+        <div className="px-4 lg:px-8 pt-1 pb-1 flex items-center gap-2">
+          <input
+            type="text"
+            onFocus={(e) => (e.target.type = 'date')}
+            onBlur={(e) => {
+              if (!e.target.value) e.target.type = 'text';
+            }}
+            placeholder="Start date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="flex-1 max-w-[200px] bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary transition-colors"
+            title="Start Date"
+          />
+          <span className="text-on-surface-variant font-medium">–</span>
+          <input
+            type="text"
+            onFocus={(e) => (e.target.type = 'date')}
+            onBlur={(e) => {
+              if (!e.target.value) e.target.type = 'text';
+            }}
+            placeholder="End date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="flex-1 max-w-[200px] bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 text-[14px] text-on-surface focus:outline-none focus:border-primary transition-colors"
+            title="End Date"
+          />
+          {(startDate || endDate) && (
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="text-[12px] font-medium text-primary ml-1 hover:opacity-80 transition-opacity"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Transaction list ── */}
+      <div className="flex-1 px-4 lg:px-8 py-6">
         {showSkeleton ? (
           <div className="flex flex-col gap-8 animate-pulse">
-            {[1, 2].map(i => (
+            {[1, 2].map((i) => (
               <div key={i} className="flex flex-col gap-3">
                 <div className="flex justify-between px-1">
                   <div className="h-6 w-32 bg-surface-container-high rounded-md" />
                   <div className="h-4 w-20 bg-surface-container rounded-md" />
                 </div>
-                <div className="card h-[160px] bg-surface-container border-border" />
+                <div className="card h-[160px] bg-surface-container" />
               </div>
             ))}
           </div>
         ) : groupedData.length > 0 ? (
-          <div className="flex flex-col gap-8">
+          /* Desktop: 2-col if wide enough (optional future enhancement) */
+          <div className="flex flex-col gap-8 max-w-5xl">
             {groupedData.map(([monthYear, { total, items }]) => (
               <div key={monthYear} className="flex flex-col gap-3">
                 <div className="flex items-center justify-between px-1">
-                  <h2 className="font-serif text-[18px] text-on-surface">{monthYear}</h2>
-                  <span className={`font-mono text-[14px] font-medium ${total >= 0 ? 'text-green-600' : 'text-on-surface-variant'}`}>
-                    {total >= 0 ? '+' : ''}{currencyFormatter.format(total)}
+                  <h2 className="font-serif text-[18px] text-on-surface">
+                    {monthYear}
+                  </h2>
+                  <span
+                    className={`font-mono text-[14px] font-medium ${
+                      total >= 0 ? 'text-green-600' : 'text-on-surface-variant'
+                    }`}
+                  >
+                    {total >= 0 ? '+' : ''}
+                    {currencyFormatter.format(total)}
                   </span>
                 </div>
-                
-                <div className="card overflow-hidden divide-y divide-border/50">
+
+                <div className="card overflow-hidden divide-y divide-outline-variant/20">
                   {items.map((item) => (
-                    <div key={item.id} className="relative group overflow-hidden">
-                      {/* Actions Overlay */}
-                      <div 
-                        className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${swipedId === item.id ? 'translate-x-0' : 'translate-x-full'}`}
+                    <div
+                      key={item.id}
+                      className="relative group overflow-hidden"
+                    >
+                      {/* Action overlay */}
+                      <div
+                        className={`absolute inset-y-0 right-0 w-[160px] flex transition-transform duration-200 z-10 ${
+                          swipedId === item.id
+                            ? 'translate-x-0'
+                            : 'translate-x-full'
+                        }`}
                       >
-                        <div 
+                        <div
                           className="w-1/2 bg-blue-500 flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors"
                           onClick={() => {
                             setEditingItem(item);
@@ -169,7 +199,7 @@ export default function HistoryPage() {
                         >
                           <Edit2 size={24} />
                         </div>
-                        <div 
+                        <div
                           className="w-1/2 bg-red-500 flex items-center justify-center text-white cursor-pointer hover:bg-red-600 transition-colors"
                           onClick={() => handleDelete(item.id, item.type)}
                         >
@@ -177,11 +207,20 @@ export default function HistoryPage() {
                         </div>
                       </div>
 
-                      <div 
-                        className={`transition-transform duration-200 bg-surface ${swipedId === item.id ? '-translate-x-[160px]' : 'translate-x-0'}`}
-                        onClick={() => setSwipedId(swipedId === item.id ? null : item.id)}
+                      {/* Row */}
+                      <div
+                        className={`transition-transform duration-200 bg-surface ${
+                          swipedId === item.id
+                            ? '-translate-x-[160px]'
+                            : 'translate-x-0'
+                        }`}
+                        onClick={() =>
+                          setSwipedId(
+                            swipedId === item.id ? null : item.id
+                          )
+                        }
                       >
-                        <ExpenseRow 
+                        <ExpenseRow
                           id={item.id}
                           amount={Number(item.amount)}
                           category={item.category}
@@ -200,17 +239,19 @@ export default function HistoryPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
             <div className="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center text-on-secondary-container mb-2">
-              <Trash2 size={32} />
+              <ReceiptText size={32} />
             </div>
-            <p className="text-on-surface-variant text-[14px] font-medium">No transactions found</p>
+            <p className="text-on-surface-variant text-[14px] font-medium">
+              No transactions found
+            </p>
           </div>
         )}
       </div>
 
-      <ExpenseModal 
-        isOpen={!!editingItem} 
-        initialData={editingItem} 
-        onClose={() => setEditingItem(null)} 
+      <ExpenseModal
+        isOpen={!!editingItem}
+        initialData={editingItem}
+        onClose={() => setEditingItem(null)}
       />
     </div>
   );

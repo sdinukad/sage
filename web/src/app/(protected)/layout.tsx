@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import MobileShell from '@/components/MobileShell';
+import AppShell from '@/components/AppShell';
 import { useAuth } from '@/context/AuthContext';
 import { ExpenseDataProvider } from '@/context/ExpenseDataContext';
 
@@ -21,10 +21,10 @@ export default function ProtectedLayout({
   }, [user, loading, router]);
 
   return (
-    <MobileShell>
+    <AppShell>
       <ExpenseDataProvider>
         {children}
       </ExpenseDataProvider>
-    </MobileShell>
+    </AppShell>
   );
 }
