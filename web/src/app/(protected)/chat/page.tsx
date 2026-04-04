@@ -22,7 +22,7 @@ interface Message {
   isPending?: boolean;
 }
 
-import { ChatMessage } from '@/shared/models';
+
 
 type ChatMode = 'ask' | 'edit';
 

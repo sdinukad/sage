@@ -88,7 +88,7 @@ export function formatFrequency(recurring: RecurringTransaction): string {
     return n + (s[(v - 10) === 10 ? 0 : (v % 10)] || s[0]);
   };
 
-  const hasScheduleValue = (v: any) => v !== null && v !== undefined;
+  const hasScheduleValue = (v: unknown) => v !== null && v !== undefined;
 
   const intervalText = interval > 1 ? `Every ${interval} ` : 'Every ';
 

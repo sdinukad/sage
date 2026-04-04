@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { syncDeleteExpense, syncDeleteIncome } from '@/lib/sync';
-import { Expense, Income } from '@/shared/models';
+import { Expense, Income, RecurringTransaction } from '@/shared/models';
 import ExpenseRow from '@/components/ExpenseRow';
 import FilterPills from '@/components/FilterPills';
 import { format, parseISO } from 'date-fns';
@@ -10,7 +10,7 @@ import { Trash2, Edit2, ReceiptText } from 'lucide-react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 import dynamic from 'next/dynamic';
 import RecurringRow from '@/components/RecurringRow';
-import { Calendar, Repeat, ArrowRight } from 'lucide-react';
+import { Repeat, ArrowRight } from 'lucide-react';
 
 const ExpenseModal = dynamic(() => import('@/components/ExpenseModal'), {
   ssr: false,
@@ -28,7 +28,7 @@ export default function HistoryPage() {
   const [endDate, setEndDate] = useState('');
   const [swipedId, setSwipedId] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<
-    (Expense | Income | any) & { type?: 'expense' | 'income' } | null
+    (Expense | Income | RecurringTransaction) | null
   >(null);
   const { recurringTransactions, deleteRecurring } = useExpenseData();
 
@@ -355,7 +355,7 @@ export default function HistoryPage() {
                   borderColor: 'color-mix(in srgb, var(--outline-variant) 50%, transparent)',
                 }}
               >
-                {recurringTransactions.map((recurring, idx) => (
+                {recurringTransactions.map((recurring) => (
                   <div 
                     key={recurring.id}
                     className="border-b last:border-none"

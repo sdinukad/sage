@@ -73,7 +73,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
   }, [localCategories]);
   const recurringTransactions = useMemo(() => {
     const all = (localRecurring || []) as RecurringTransaction[];
-    return all.filter(r => (r as any).sync_status !== 'pending_delete');
+    return all.filter(r => (r as RecurringTransaction & { sync_status?: string }).sync_status !== 'pending_delete');
   }, [localRecurring]);
   const recentExpenses = useMemo(() => expenses.slice(0, 10), [expenses]);
   

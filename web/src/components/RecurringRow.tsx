@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { RecurringTransaction, formatFrequency, SUPPORTED_CURRENCIES } from '@/shared/models';
-import { useSettings } from '@/context/SettingsContext';
+
 import { Calendar, Repeat, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 
@@ -21,7 +21,7 @@ const RecurringRow: React.FC<RecurringRowProps> = ({
   isSwiped, 
   onSwipe 
 }) => {
-  const { formatCurrency } = useSettings();
+
   const { categories } = useExpenseData();
   
   const categoryColor = categories.find(c => c.name === recurring.category)?.color || 'var(--primary)';
@@ -88,7 +88,7 @@ const RecurringRow: React.FC<RecurringRowProps> = ({
                     style: 'currency',
                     currency: recurring.currency,
                   }).format(recurring.amount);
-                } catch (e) {
+                } catch {
                   return `${recurring.currency} ${recurring.amount}`;
                 }
               })()}

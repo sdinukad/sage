@@ -125,6 +125,7 @@ export async function processSageChat(
     Expenses: ${JSON.stringify(expenses)}
     Incomes: ${JSON.stringify(incomes)}
     History: ${JSON.stringify(history)}
+    Pending Action: ${JSON.stringify(pendingAction || null)}
     User Message: ${message}`;
 
 

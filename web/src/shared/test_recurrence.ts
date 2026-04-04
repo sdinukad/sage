@@ -89,7 +89,7 @@ const testCases: TestCase[] = [
 function runTests() {
     console.log(`\n--- Running 50+ Recurrence Extraction Tests ---\n`);
     let passed = 0;
-    let failedCases: string[] = [];
+    const failedCases: string[] = [];
 
     testCases.forEach((tc, i) => {
         const result = extractEntities(tc.phrase);
