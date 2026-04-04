@@ -81,6 +81,12 @@ export async function processSageChat(
     const expCats = buildCatString(expenseCategories, 'Food, Transport, Bills, Entertainment, Health, Shopping, Other');
     const incCats = buildCatString(incomeCategories, 'Salary, Bonus, Investment, Gift, Other');
 
+    // Prevent prompt injection attempts from manipulating the JSON structure
+    const sanitizedMessage = message
+        .replace(/ignore(s?)\s+.*?(instruction|prompt)s?/gi, '')
+        .replace(/system\s+(prompt|instruction)/gi, '')
+        .slice(0, 1000);
+
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
     You can now track both EXPENSES and INCOMES (e.g., salary, bonus).
@@ -126,7 +132,7 @@ export async function processSageChat(
     Incomes: ${JSON.stringify(incomes)}
     History: ${JSON.stringify(history)}
     Pending Action: ${JSON.stringify(pendingAction || null)}
-    User Message: ${message}`;
+    User Message: ${sanitizedMessage}`;
 
 
     try {
@@ -159,6 +165,12 @@ export async function processSageChatStream(
     };
     const expCats = buildCatString(expenseCategories, 'Food, Transport, Bills, Entertainment, Health, Shopping, Other');
     const incCats = buildCatString(incomeCategories, 'Salary, Bonus, Investment, Gift, Other');
+
+    // Prevent prompt injection attempts from manipulating the JSON structure
+    const sanitizedMessage = message
+        .replace(/ignore(s?)\s+.*?(instruction|prompt)s?/gi, '')
+        .replace(/system\s+(prompt|instruction)/gi, '')
+        .slice(0, 1000);
 
     const prompt = `You are Sage, a helpful personal accountant. 
     Analyze the user's message, current expenses, and current incomes. 
@@ -196,7 +208,7 @@ export async function processSageChatStream(
     Current Date: ${new Date().toISOString()}
     Expenses: ${JSON.stringify(expenses)}
     Incomes: ${JSON.stringify(incomes)}
-    User Message: ${message}`;
+    User Message: ${sanitizedMessage}`;
 
     let lastError: Error | unknown;
 

@@ -954,7 +954,7 @@ export async function processChat(
     history: ChatMessage[] = [],
     pendingAction?: ChatAction
 ): Promise<ChatResponse> {
-    console.log(`[LocalAI] Processing original: "${message}" (History: ${history.length} msgs)`);
+    console.log(`[LocalAI] Processing query length: ${message.length} (History: ${history.length} msgs)`);
 
     // Context handling: Check if this is a reply to a pending action
     if (pendingAction && (pendingAction.type === 'add_expense' || pendingAction.type === 'add_income' || pendingAction.type === 'add_recurring')) {

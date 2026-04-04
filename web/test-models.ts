@@ -1,9 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import * as fs from "fs";
+import { loadEnvConfig } from "@next/env";
 
-const envFile = fs.readFileSync('.env.local', 'utf-8');
-const match = envFile.match(/GEMINI_API_KEY=(.*)/);
-const apiKey = match ? match[1].trim() : null;
+loadEnvConfig(process.cwd());
+const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
   console.error("No API key");
