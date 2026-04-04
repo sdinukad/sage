@@ -327,6 +327,10 @@ export function extractEntities(
             d.setDate(d.getDate() - 7);
             return toLocalDateString(d);
         }],
+        [/\blast\s*month\b/i, () => {
+            const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            return toLocalDateString(d);
+        }],
         [/\bthis\s*morning\b/i, () => toLocalDateString(now)],
         [/\bearlier\s*today\b/i, () => toLocalDateString(now)],
         [/\bon\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i, () => {
@@ -736,7 +740,7 @@ function buildResponse(
         }
 
         case 'query': {
-            const queryAnswer = buildQueryAnswer(extracted!, expenses, incomes, locale, baseCurrency);
+            const queryAnswer = buildQueryAnswer(originalQuery, extracted!, expenses, incomes, locale, baseCurrency);
             answer = queryAnswer.text;
             if (queryAnswer.matchedIds.length > 0) {
                 actions.push({
@@ -756,6 +760,7 @@ function buildResponse(
 // ---------------------------------------------------------------------------
 
 function buildQueryAnswer(
+    originalQuery: string,
     entities: ExtractedEntities,
     expenses: Expense[],
     incomes: Income[],
@@ -763,6 +768,7 @@ function buildQueryAnswer(
     baseCurrency: string = 'LKR'
 ): { text: string; matchedIds: string[] } {
     const now = new Date();
+    const queryForTime = originalQuery.toLowerCase();
     const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
     const thisWeekStart = new Date(now.getTime() - (now.getDay() * 24 * 60 * 60 * 1000));
     const thisWeekStartStr = `${thisWeekStart.getFullYear()}-${String(thisWeekStart.getMonth() + 1).padStart(2, '0')}-${String(thisWeekStart.getDate()).padStart(2, '0')}`;
@@ -779,20 +785,44 @@ function buildQueryAnswer(
     }
 
     // Time-based filtering
-    const noteAndCategory = (entities.note || '').toLowerCase() + ' ' + (entities.category || '').toLowerCase();
-    if (noteAndCategory.includes('today')) {
-        filtered = filtered.filter(e => e.date?.startsWith(todayStr));
-        timeLabel += 'today';
-    } else if (noteAndCategory.includes('this week') || noteAndCategory.includes('week')) {
-        filtered = filtered.filter(e => e.date && e.date >= thisWeekStartStr);
-        timeLabel += 'this week';
-    } else if (noteAndCategory.includes('this month') || noteAndCategory.includes('month')) {
-        filtered = filtered.filter(e => e.date && e.date >= thisMonthStart);
-        timeLabel += 'this month';
+    const isShowQuery = queryForTime.includes('show') || queryForTime.includes('list') || queryForTime.includes('all') || queryForTime.includes('everything') || queryForTime.includes('recent');
+    
+    let startDate: string | null = thisMonthStart;
+    let endDate: string | null = null;
+    if (queryForTime.includes('today')) {
+        startDate = todayStr;
+        timeLabel += (timeLabel ? '' : ' ') + 'today';
+    } else if (queryForTime.includes('last month') || queryForTime.includes('previous month') || queryForTime.includes('past month')) {
+        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        startDate = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        endDate = `${lastMonthEnd.getFullYear()}-${String(lastMonthEnd.getMonth() + 1).padStart(2, '0')}-${String(lastMonthEnd.getDate()).padStart(2, '0')}`;
+        timeLabel += (timeLabel ? '' : ' ') + 'last month';
+    } else if (queryForTime.includes('last year') || queryForTime.includes('previous year')) {
+        startDate = `${now.getFullYear() - 1}-01-01`;
+        endDate = `${now.getFullYear() - 1}-12-31`;
+        timeLabel += (timeLabel ? '' : ' ') + 'last year';
+    } else if (queryForTime.includes('this year')) {
+        startDate = `${now.getFullYear()}-01-01`;
+        timeLabel += (timeLabel ? '' : ' ') + 'this year';
+    } else if (queryForTime.includes('week')) {
+        startDate = thisWeekStartStr;
+        timeLabel += (timeLabel ? '' : ' ') + 'this week';
+    } else if (queryForTime.includes('month')) {
+        startDate = thisMonthStart;
+        timeLabel += (timeLabel ? '' : ' ') + 'this month';
+    } else if (entities.category && isShowQuery) {
+        // Broad search for category
+        startDate = null;
+        timeLabel += (timeLabel ? '' : ' ') + 'all time';
     } else {
-        filtered = filtered.filter(e => e.date && e.date >= thisMonthStart);
-        if (!timeLabel) timeLabel = 'this month';
+        // Default to this month
+        startDate = thisMonthStart;
+        timeLabel += (timeLabel ? '' : ' ') + 'this month';
     }
+
+    if (startDate) filtered = filtered.filter(e => e.date && e.date >= startDate!);
+    if (endDate) filtered = filtered.filter(e => e.date && e.date <= endDate!);
 
     const total = filtered.reduce((sum, e) => sum + Number(e.amount || 0), 0);
     const count = filtered.length;
@@ -805,19 +835,20 @@ function buildQueryAnswer(
         breakdown[cat] = (breakdown[cat] || 0) + Number(e.amount || 0);
     });
 
-    // Income totals
-    const totalIncome = incomes
-        .filter(i => i.date && i.date >= thisMonthStart)
-        .reduce((sum, i) => sum + Number(i.amount || 0), 0);
+    // Income totals (respect the same timeframe)
+    let filteredIncomes = incomes;
+    if (startDate) filteredIncomes = filteredIncomes.filter(i => i.date && i.date >= startDate!);
+    if (endDate) filteredIncomes = filteredIncomes.filter(i => i.date && i.date <= endDate!);
+    const totalIncome = filteredIncomes.reduce((sum, i) => sum + Number(i.amount || 0), 0);
 
     let text = '';
 
-    if (noteAndCategory.includes('balance') || noteAndCategory.includes('net') || noteAndCategory.includes('left') || noteAndCategory.includes('saving')) {
+    if (queryForTime.includes('balance') || queryForTime.includes('net') || queryForTime.includes('left') || queryForTime.includes('saving')) {
         const net = totalIncome - total;
-        text = `This month: Income ${formatCurrency(totalIncome, locale, baseCurrency)} - Expenses ${formatCurrency(total, locale, baseCurrency)} = ${net >= 0 ? 'Surplus' : 'Deficit'} of ${formatCurrency(Math.abs(net), locale, baseCurrency)}.`;
-    } else if (noteAndCategory.includes('income') || noteAndCategory.includes('earn')) {
-        text = `Total income this month: ${formatCurrency(totalIncome, locale, baseCurrency)} from ${incomes.filter(i => i.date && i.date >= thisMonthStart).length} entries.`;
-    } else if (noteAndCategory.includes('biggest') || noteAndCategory.includes('top') || noteAndCategory.includes('most')) {
+        text = `For ${timeLabel.trim()}: Income ${formatCurrency(totalIncome, locale, baseCurrency)} - Expenses ${formatCurrency(total, locale, baseCurrency)} = ${net >= 0 ? 'Surplus' : 'Deficit'} of ${formatCurrency(Math.abs(net), locale, baseCurrency)}.`;
+    } else if (queryForTime.includes('income') || queryForTime.includes('earn')) {
+        text = `Total income ${timeLabel.trim()}: ${formatCurrency(totalIncome, locale, baseCurrency)} from ${filteredIncomes.length} entries.`;
+    } else if (queryForTime.includes('biggest') || queryForTime.includes('top') || queryForTime.includes('most')) {
         const sorted = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
         if (sorted.length > 0) {
             text = `Your biggest category ${timeLabel}: ${sorted[0][0]} at ${formatCurrency(sorted[0][1], locale, baseCurrency)}`;
@@ -828,15 +859,16 @@ function buildQueryAnswer(
         } else {
             text = `No expenses found ${timeLabel}.`;
         }
-    } else if (noteAndCategory.includes('breakdown') || noteAndCategory.includes('summary') || noteAndCategory.includes('trend')) {
+    } else if (queryForTime.includes('breakdown') || queryForTime.includes('summary') || queryForTime.includes('trend')) {
         const sorted = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
         text = `Spending breakdown ${timeLabel} (${formatCurrency(total, locale, baseCurrency)} total):\n` +
             sorted.map(([cat, amt]) => `• ${cat}: ${formatCurrency(amt, locale, baseCurrency)}`).join('\n');
-    } else if (noteAndCategory.includes('average') || noteAndCategory.includes('daily')) {
-        const days = Math.max(1, Math.ceil((now.getTime() - new Date(thisMonthStart).getTime()) / (1000 * 60 * 60 * 24)));
+    } else if (queryForTime.includes('average') || queryForTime.includes('daily')) {
+        const effectiveStart = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+        const days = Math.max(1, Math.ceil((now.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)));
         const avg = total / days;
         text = `Your daily average spending ${timeLabel}: ${formatCurrency(Math.round(avg), locale, baseCurrency)} (${formatCurrency(total, locale, baseCurrency)} over ${days} days).`;
-    } else if (noteAndCategory.includes('recent') || noteAndCategory.includes('last') || noteAndCategory.includes('list') || noteAndCategory.includes('show') || noteAndCategory.includes('all') || noteAndCategory.includes('everything')) {
+    } else if (queryForTime.includes('recent') || queryForTime.includes('last') || queryForTime.includes('list') || queryForTime.includes('show') || queryForTime.includes('all') || queryForTime.includes('everything')) {
         text = `Here are your ${count > 10 ? 'most recent 10 of ' + count : count} expenses ${timeLabel} (${formatCurrency(total, locale, baseCurrency)} total):`;
     } else {
         // Default: total spending
@@ -1072,6 +1104,6 @@ export async function processQuery(
     baseCurrency: string = 'LKR'
 ): Promise<{ answer: string; matchedIds: string[] }> {
     const entities = extractEntities(query);
-    const result = buildQueryAnswer(entities, expenses, [], locale, baseCurrency);
+    const result = buildQueryAnswer(query, entities, expenses, [], locale, baseCurrency);
     return { answer: result.text, matchedIds: result.matchedIds };
 }
