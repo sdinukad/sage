@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Expense, ChatResponse, Income, ChatAction, AICategory } from './models';
+import { Expense, ChatResponse, Income, ChatAction, AICategory, ChatMessage } from './models';
 
 const MODELS = [
     'gemini-3.1-flash-lite-preview', // Fastest & Primary
@@ -70,7 +70,9 @@ export async function processSageChat(
     incomeCategories: AICategory[] = [],
     incomes: Income[] = [],
     locale: string = 'en-LK',
-    baseCurrency: string = 'LKR'
+    baseCurrency: string = 'LKR',
+    history: ChatMessage[] = [],
+    pendingAction?: ChatAction
 ): Promise<ChatResponse> {
     const buildCatString = (cats: AICategory[], fallback: string) => {
         if (cats.length === 0) return fallback;
@@ -96,26 +98,35 @@ export async function processSageChat(
 
     Return ONLY this JSON structure:
     {
-        "answer": "A human-like greeting and summary",
+        "answer": "A human-like greeting and summary. If the user provided missing info for a pending action, acknowledge it.",
         "actions": [
             {
                 "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
                     "newExpense": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
-                    "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
                     "editExpense": { "id": "uuid", "changes": { ... } },
                     "editIncome": { "id": "uuid", "changes": { ... } }
                 },
                 "confirmationText": "Clear confirmation question for this action"
             }
-        ]
+        ],
+        "pendingAction": { ... same as action ... }
     }
+
+    Rules for Pending Actions:
+    - If the user provides an expense/income but the category is ambiguous or not in the list, put the action in "pendingAction" instead of "actions" and ask the user for the category in the "answer".
+    - If there is a "Pending Action" in history (the last Assistant message asked for info), check if the current User Message provides that info (e.g., just a category name). 
+    - If it does, promote the "Pending Action" to a full "action" with the new info, and clear the "pendingAction" field.
+
 
     Current Date: ${new Date().toISOString()}
     Expenses: ${JSON.stringify(expenses)}
     Incomes: ${JSON.stringify(incomes)}
+    History: ${JSON.stringify(history)}
     User Message: ${message}`;
+
 
     try {
         const result = await callGemini(prompt);

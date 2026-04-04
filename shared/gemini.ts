@@ -1,3 +1,4 @@
+declare const process: any;
 import { Category, Expense, ChatAction, ChatResponse } from './models';
 
 const MODEL = 'gemini-3-flash-preview';
@@ -79,27 +80,28 @@ export async function processSageChat(
     
     For each request in the message, identify the intent:
     1. QUERY: Ask for information about their spending.
-    2. ADD: Record a new expense.
-    3. EDIT: Modify an existing expense.
+    2. ADD_EXPENSE: Record a new one-time expense.
+    3. ADD_INCOME: Record a new one-time income.
+    4. ADD_RECURRING: Record a recurring expense or income that repeats (daily, weekly, monthly, yearly).
 
     Return ONLY JSON:
     {
         "answer": "Greeting and summary of what you found",
         "actions": [
             {
-                "type": "query" | "add" | "edit" | "unknown",
+                "type": "query" | "add_expense" | "add_income" | "add_recurring" | "edit_expense" | "edit_income" | "edit_recurring" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
-                    "newExpense": { "amount": number, "category": "Food"|"Transport"|"Bills"|"Entertainment"|"Health"|"Shopping"|"Other", "note": "string", "date": "ISO string" },
-                    "editExpense": { "id": "uuid", "changes": { ... } }
+                    "newExpense": { "amount": number, "currency": "USD", "category": "Food", "note": "string", "date": "ISO string" },
+                    "newIncome": { "amount": number, "currency": "USD", "category": "Salary", "note": "string", "date": "ISO string" },
+                    "newRecurring": { "type": "expense"|"income", "amount": number, "currency": "USD", "category": "Bills", "note": "string", "frequency": "daily"|"weekly"|"monthly"|"yearly", "start_date": "ISO string" },
+                    "editExpense": { "id": "uuid", "changes": { ... } },
+                    "editRecurring": { "id": "uuid", "changes": { ... } }
                 },
                 "confirmationText": "Confirmation question for this action"
             }
         ]
     }
-
-    If no expenses match a query, return matchedIds: [].
-    If recording multiple expenses, add multiple items to the "actions" array.
 
     Current Date: ${new Date().toISOString()}
     Expenses: ${JSON.stringify(expenses)}

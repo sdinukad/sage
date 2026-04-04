@@ -1,20 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import BottomSheet from './BottomSheet';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
 import { useSettings } from '@/context/SettingsContext';
-import { useMemo } from 'react';
-import { SUPPORTED_CURRENCIES, Expense, Income } from '@/shared/models';
+import { SUPPORTED_CURRENCIES, Expense, Income, RecurringTransaction, CurrencyConfig, getRecurringSchedule } from '@/shared/models';
 import { getRate } from '@/lib/exchange-rates';
-import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome } from '@/lib/sync';
+import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome, syncAddRecurring, syncUpdateRecurring } from '@/lib/sync';
 
 interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  initialData?: (Expense | Income) & { type?: 'expense' | 'income' } | null;
+  initialData?: (Expense | Income | RecurringTransaction) & { type?: 'expense' | 'income' } | null;
 }
 
 export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }: ExpenseModalProps) {
@@ -32,6 +31,9 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
   const [loading, setLoading] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [currencyError, setCurrencyError] = useState<string | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [interval, setInterval] = useState<number>(1);
 
   const activeCategories = useMemo(() => 
     categories.filter(c => c.type === type).map(c => c.name),
@@ -72,18 +74,29 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
         setCurrencyInput(initialData.currency || currency);
         setNote(initialData.note || '');
         setCategory(initialData.category);
-        setDate(initialData.date.split('T')[0]);
+        
+        // Handle both regular and recurring transactions
+        const dataDate = 'start_date' in initialData ? initialData.start_date : (initialData as Expense | Income).date;
+        if (dataDate) setDate(dataDate.split('T')[0]);
+        
         setType(initialData.type || 'expense');
+        setIsRecurring('frequency' in initialData);
+        if ('frequency' in initialData) {
+          setFrequency((initialData as RecurringTransaction).frequency);
+          setInterval((initialData as RecurringTransaction).interval || 1);
+        }
       } else {
         setAmount('');
         setCurrencyInput(currency);
         setNote('');
         setCategory('Other');
         setType('expense');
+        setIsRecurring(false);
+        setFrequency('monthly');
+        setInterval(1);
         setDate(new Date().toISOString().split('T')[0]);
         setTimeout(() => amountRef.current?.focus(), 400);
       }
-      // Reset error states whenever the modal opens or content changes
       setCurrencyError(null);
       setIsShaking(false);
     }
@@ -113,40 +126,65 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
         rate = await getRate(targetCurrency, baseCurrency, date);
       }
 
-      if (initialData) {
-        const updateData = {
-          amount: parsedAmount,
-          currency: targetCurrency,
-          base_amount: Math.round(parsedAmount * rate * 100) / 100,
-          base_currency: baseCurrency,
-          exchange_rate: rate,
-          note,
-          category,
-          date
-        };
-        if (type === 'income') {
-          await syncUpdateIncome(initialData.id, updateData);
-        } else {
-          await syncUpdateExpense(initialData.id, updateData);
-        }
-      } else {
-        const common = {
-          id: crypto.randomUUID(),
+      if (isRecurring) {
+        const schedule = getRecurringSchedule(date, frequency);
+        const recurringData: RecurringTransaction = {
+          id: (initialData && 'frequency' in initialData) ? initialData.id : crypto.randomUUID(),
           user_id: user.id,
+          type,
           amount: parsedAmount,
           currency: targetCurrency,
-          base_amount: Math.round(parsedAmount * rate * 100) / 100,
-          base_currency: baseCurrency,
-          exchange_rate: rate,
-          note,
           category,
-          date,
+          note,
+          frequency,
+          interval,
+          ...schedule,
+          start_date: date,
+          active: true,
           created_at: new Date().toISOString()
         };
-        if (type === 'income') {
-          await syncAddIncome(common as Income);
+
+        if (initialData && 'frequency' in initialData) {
+          await syncUpdateRecurring(initialData.id, recurringData);
         } else {
-          await syncAddExpense(common as Expense);
+          await syncAddRecurring(recurringData);
+        }
+      } else {
+        if (initialData) {
+          const updateData = {
+            amount: parsedAmount,
+            currency: targetCurrency,
+            base_amount: Math.round(parsedAmount * rate * 100) / 100,
+            base_currency: baseCurrency,
+            exchange_rate: rate,
+            note,
+            category,
+            date
+          };
+          if (type === 'income') {
+            await syncUpdateIncome(initialData.id, updateData);
+          } else {
+            await syncUpdateExpense(initialData.id, updateData);
+          }
+        } else {
+          const common = {
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            amount: parsedAmount,
+            currency: targetCurrency,
+            base_amount: Math.round(parsedAmount * rate * 100) / 100,
+            base_currency: baseCurrency,
+            exchange_rate: rate,
+            note,
+            category,
+            date,
+            created_at: new Date().toISOString()
+          };
+          if (type === 'income') {
+            await syncAddIncome(common as Income);
+          } else {
+            await syncAddExpense(common as Expense);
+          }
         }
       }
 
@@ -215,7 +253,7 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
               
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute top-8 left-0 z-50 w-48 max-h-48 overflow-y-auto bg-surface border border-border rounded-lg shadow-xl animate-in fade-in slide-in-from-top-1">
-                  {suggestions.map((curr) => (
+                  {suggestions.map((curr: CurrencyConfig) => (
                     <button
                       key={curr.code}
                       type="button"
@@ -269,13 +307,15 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
                 onChange={(e) => setCategory(e.target.value)}
                 className="input-field appearance-none"
               >
-                {activeCategories.map((cat) => (
+                {activeCategories.map((cat: string) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Date</label>
+              <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">
+                {isRecurring ? 'Start Date' : 'Date'}
+              </label>
               <input
                 type="date"
                 value={date}
@@ -284,6 +324,60 @@ export default function ExpenseModal({ isOpen, onClose, onSuccess, initialData }
                 required
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-3 p-3 bg-surface-container rounded-2xl border border-surface-variant/50">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[14px] font-medium text-on-surface">Recurring Transaction</span>
+                <span className="text-[12px] text-on-surface-variant">Automatically repeat this entry</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRecurring(!isRecurring)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ring-offset-2 focus:ring-2 ring-primary/20 ${isRecurring ? 'bg-primary' : 'bg-surface-variant'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isRecurring ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
+            </div>
+
+            {isRecurring && (
+              <div className="flex flex-col gap-2 pt-2 border-t border-surface-variant/30 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-on-surface-variant uppercase ml-1">Frequency & Interval</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 grid grid-cols-4 gap-1 p-1 bg-surface-container-high rounded-xl border border-surface-variant/30">
+                      {(['daily', 'weekly', 'monthly', 'yearly'] as const).map((freq) => (
+                        <button
+                          key={freq}
+                          type="button"
+                          onClick={() => setFrequency(freq)}
+                          className={`py-1.5 text-[11px] font-semibold rounded-lg capitalize transition-all ${frequency === freq ? 'bg-surface text-primary shadow-sm ring-1 ring-black/5' : 'text-on-surface-variant hover:text-on-surface'}`}
+                        >
+                          {freq}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="w-20 relative">
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={interval}
+                        onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+                        className="w-full h-full bg-surface-container-high border border-surface-variant/30 rounded-xl px-3 text-center text-sm font-bold text-primary outline-none focus:ring-2 ring-primary/20"
+                        placeholder="1"
+                      />
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-surface-container-high px-1 text-[9px] font-bold text-on-surface-variant/60 uppercase">
+                        Every
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

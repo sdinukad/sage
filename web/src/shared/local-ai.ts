@@ -10,7 +10,7 @@
  * Returns the same ChatResponse interface the frontend expects.
  */
 
-import { ChatResponse, ChatAction, Expense, Income } from './models';
+import { ChatResponse, ChatAction, Expense, Income, getRecurringSchedule, ChatMessage } from './models';
 import * as ort from 'onnxruntime-node';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -21,14 +21,19 @@ import { AICategory } from './models';
 // Types
 // ---------------------------------------------------------------------------
 
-type IntentLabel = 'add_expense' | 'add_income' | 'query' | 'edit_expense' | 'edit_income';
+type IntentLabel = 'add_expense' | 'add_income' | 'add_recurring' | 'query' | 'edit_expense' | 'edit_income' | 'edit_recurring';
 
-interface ExtractedEntities {
+export interface ExtractedEntities {
     amount?: number;
     currency?: string;
     category?: string;
     note?: string;
     date?: string;
+    frequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    interval?: number;
+    day_of_week?: number;
+    day_of_month?: number;
+    month_of_year?: number;
 }
 
 interface TokenizerVocab {
@@ -188,10 +193,10 @@ function toLocalDateString(d: Date): string {
 function mapToCurrencyCode(token: string): string | null {
     if (!token) return null;
     const t = token.toUpperCase().replace(/\.$/, '');
-    if (t === '$' || t === 'USD') return 'USD';
-    if (t === '€' || t === 'EUR') return 'EUR';
-    if (t === '£' || t === 'GBP') return 'GBP';
-    if (t === '¥' || t === 'JPY') return 'JPY';
+    if (t === '$' || t === 'USD' || token === '$') return 'USD';
+    if (t === '€' || t === 'EUR' || token === '€') return 'EUR';
+    if (t === '£' || t === 'GBP' || token === '£') return 'GBP';
+    if (t === '¥' || t === 'JPY' || token === '¥') return 'JPY';
     if (t === 'RS' || t === 'RS.' || t === '₨' || t === 'LKR' || t === 'RUPEES') return 'LKR';
     // If it's a 3-letter code not explicitly mapped, check it's not a verb fragment
     const commonCurrencies = ['USD', 'LKR', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR', 'SGD', 'AED', 'SAR', 'QAR', 'CHF', 'CNY', 'THB', 'MYR', 'KRW', 'NZD'];
@@ -201,38 +206,109 @@ function mapToCurrencyCode(token: string): string | null {
     return null;
 }
 
-function extractEntities(
+export function extractEntities(
     message: string,
     expenseCategories: AICategory[] = [],
     incomeCategories: AICategory[] = []
 ): ExtractedEntities {
     const entities: ExtractedEntities = {};
+    const now = new Date();
 
-    // Amount and Currency extraction
-    // Match amounts like "USD 50", "€100", "50.50 LKR", "rs. 50"
-    const amountPattern = /(?:\b(USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|rs\.?|₨|\$|€|£|¥)\s*)?\b(\d[\d,]*(?:\.\d{1,2})?)(?!\d)\s*\b(k|USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|rupees?|rs|bucks?)?\b/gi;
-    const match = amountPattern.exec(message);
-    if (match) {
-        let amount = parseFloat(match[2].replace(/,/g, ''));
-        const prefix = (match[1] || '').toLowerCase();
-        const suffix = (match[3] || '').trim().toLowerCase();
-        
-        if (suffix === 'k') {
-            amount *= 1000;
-        } else if (!suffix && message.slice(match.index + match[0].length).trim().toLowerCase().startsWith('k')) {
-            amount *= 1000;
-        }
-        entities.amount = amount;
+    // 1. Frequency and Interval extraction
+    const freqPatterns: [RegExp, 'daily' | 'weekly' | 'monthly' | 'yearly'][] = [
+        [/\bevery\s+day\b/i, 'daily'],
+        [/\bdaily\b/i, 'daily'],
+        [/\bevery\s+week\b/i, 'weekly'],
+        [/\bweekly\b/i, 'weekly'],
+        [/\bevery\s+month\b/i, 'monthly'],
+        [/\bmonthly\b/i, 'monthly'],
+        [/\bevery\s+year\b/i, 'yearly'],
+        [/\byearly\b/i, 'yearly'],
+    ];
 
-        // Try to identify currency
-        const mappedCurrency = mapToCurrencyCode(prefix || suffix);
-        if (mappedCurrency) {
-            entities.currency = mappedCurrency;
+    for (const [pattern, freq] of freqPatterns) {
+        if (pattern.test(message)) {
+            entities.frequency = freq;
+            break;
         }
     }
 
-    // Date extraction
-    const now = new Date();
+    const intervalMatch = /\bevery\s+(\d+)\s+(days?|weeks?|months?|years?)\b/i.exec(message);
+    if (intervalMatch) {
+        entities.interval = parseInt(intervalMatch[1]);
+        const unit = intervalMatch[2].toLowerCase();
+        if (unit.startsWith('day')) entities.frequency = 'daily';
+        else if (unit.startsWith('week')) entities.frequency = 'weekly';
+        else if (unit.startsWith('month')) entities.frequency = 'monthly';
+        else if (unit.startsWith('year')) entities.frequency = 'yearly';
+    }
+
+    const dowMatch = /\bevery\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b/i.exec(message);
+    if (dowMatch) {
+        const dows: Record<string, number> = {
+            'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 'friday': 5, 'saturday': 6
+        };
+        entities.frequency = 'weekly';
+        entities.day_of_week = dows[dowMatch[1].toLowerCase()];
+    }
+
+    const domMatch = /(?:\bon the\b|\bevery\b)\s+(\d+)(?:st|nd|rd|th)?(?:\s+of\b|\s+day\b)?/i.exec(message);
+    if (domMatch) {
+        const dom = parseInt(domMatch[1]);
+        if (dom >= 1 && dom <= 31) {
+            entities.day_of_month = dom;
+            if (!entities.frequency) entities.frequency = 'monthly';
+        }
+    }
+
+    // 2. Prepare masked text for Amount and Note extraction
+    let amountSearchText = message;
+    if (intervalMatch) {
+        const escaped = intervalMatch[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        amountSearchText = amountSearchText.replace(new RegExp(escaped, 'gi'), '[INTERVAL]');
+    }
+    if (domMatch) {
+        const escaped = domMatch[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        amountSearchText = amountSearchText.replace(new RegExp(escaped, 'gi'), '[DOM]');
+    }
+    if (dowMatch) {
+        const escaped = dowMatch[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        amountSearchText = amountSearchText.replace(new RegExp(escaped, 'gi'), '[DOW]');
+    }
+
+    // 3. Amount and Currency extraction
+    // Heuristic: Identify all potential amounts and pick the most likely one (e.g., with currency or later in string)
+    const amountPattern = /(?:(USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|rs\.?|₨|\$|€|£|¥)\s*)?(\d[\d,]*(?:\.\d{1,2})?)(?!\d)(?:\s*(k|USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|rupees?|rs|bucks?))?/gi;
+    
+    let bestMatch: { amount: number, currency?: string, index: number, length: number } | null = null;
+    let currentMatch;
+    
+    while ((currentMatch = amountPattern.exec(amountSearchText)) !== null) {
+        let amount = parseFloat(currentMatch[2].replace(/,/g, ''));
+        const prefix = (currentMatch[1] || '').trim();
+        const suffix = (currentMatch[3] || '').trim();
+        
+        if (suffix.toLowerCase() === 'k') amount *= 1000;
+        
+        const currency = mapToCurrencyCode(prefix) || mapToCurrencyCode(suffix) || undefined;
+        
+        // Priority: 
+        // 1. Matches with explicit currency
+        // 2. Later matches (usually "add [note] [amount]")
+        // 3. Larger amounts (usually avoid small counts like "2 kids")
+        if (!bestMatch || currency || (amount > bestMatch.amount && !bestMatch.currency) || currentMatch.index > bestMatch.index + 10) {
+            if (!bestMatch || currency || !bestMatch.currency) {
+              bestMatch = { amount, currency, index: currentMatch.index, length: currentMatch[0].length };
+            }
+        }
+    }
+
+    if (bestMatch) {
+        entities.amount = bestMatch.amount;
+        if (bestMatch.currency) entities.currency = bestMatch.currency;
+    }
+
+    // 4. Date extraction
     const datePatterns: [RegExp, () => string][] = [
         [/\btoday\b/i, () => toLocalDateString(now)],
         [/\byesterday\b/i, () => {
@@ -283,22 +359,6 @@ function extractEntities(
             const d = new Date(now.getFullYear(), now.getMonth(), parseInt(m![1]));
             return toLocalDateString(d);
         }],
-        [/\b(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i, () => {
-            const monthNames: Record<string, number> = {
-                jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
-                apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
-                aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
-                nov: 10, november: 10, dec: 11, december: 11,
-            };
-            const m = message.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i);
-            if (m) {
-                const day = parseInt(m[1]);
-                const month = monthNames[m[2].toLowerCase()];
-                const d = new Date(now.getFullYear(), month, day);
-                return toLocalDateString(d);
-            }
-            return toLocalDateString(now);
-        }],
     ];
 
     for (const [pattern, dateGen] of datePatterns) {
@@ -307,16 +367,12 @@ function extractEntities(
             break;
         }
     }
+    if (!entities.date) entities.date = toLocalDateString(now);
 
-    if (!entities.date) {
-        entities.date = toLocalDateString(now);
-    }
-
-    // Category extraction — fuzzy match against user's categories
-    const allCategories = [...expenseCategories, ...incomeCategories];
-    const defaultExpenseCategories = ['Food', 'Transport', 'Bills', 'Entertainment', 'Health', 'Shopping', 'Other'];
-    const defaultIncomeCategories = ['Salary', 'Bonus', 'Investment', 'Gift', 'Freelance', 'Other'];
-    const searchCategories = allCategories.length > 0 ? allCategories.map(c => c.name) : [...defaultExpenseCategories, ...defaultIncomeCategories];
+    // 5. Category extraction
+    const searchCategories = expenseCategories.length > 0 
+        ? [...expenseCategories, ...incomeCategories].map(c => c.name) 
+        : ['Food', 'Transport', 'Bills', 'Entertainment', 'Health', 'Shopping', 'Salary', 'Investment', 'Other'];
 
     const messageLower = message.toLowerCase();
     for (const cat of searchCategories) {
@@ -326,25 +382,34 @@ function extractEntities(
         }
     }
 
-    // Note extraction — whatever's left after removing amount, date, category
-    let noteText = message;
-    // Remove amounts with currencies
-    noteText = noteText.replace(/(?:\b(USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|CAD|CHF|CNY|THB|MYR|KRW|NZD|RS)\s*)?\b\d[\d,]*(?:\.\d{1,2})?(\s*\b(k|USD|LKR|EUR|GBP|JPY|CAD|AUD|INR|SGD|AED|SAR|QAR|rupees?|rs|bucks?))?\b/gi, '');
-    // Remove standalone symbols (not adjacent to words to avoid stripping intended notes)
-    noteText = noteText.replace(/(^|\s)[\$€£¥₹](\s|$)/g, ' ');
-    // Remove date references
-    noteText = noteText.replace(/\b(?:today|yesterday|last\s*(?:week|month)|this\s*morning|earlier\s*today|\d+\s*days?\s*ago|on\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*\d{1,2}|on\s*the\s*\d{1,2}(?:st|nd|rd|th)?)\b/gi, '');
-    // Remove common verbs / filler
-    noteText = noteText.replace(/\b(?:spent|paid|bought|had|cost|was|for|on|add|log|record|new|expense|income|i|just|about|dropped|blew|charged|used|got|received|earned|my)\b/gi, '');
-    // Remove extra whitespace
-    noteText = noteText.replace(/\s+/g, ' ').trim();
+    // 6. Note extraction
+    let noteText = amountSearchText;
+    if (bestMatch) {
+        // Remove the chosen amount from the note text
+        const before = noteText.slice(0, bestMatch.index);
+        const after = noteText.slice(bestMatch.index + bestMatch.length);
+        noteText = before + after;
+    }
+    
+    // Also remove the explicit date matches if they're still around
+    for (const [pattern] of datePatterns) {
+        noteText = noteText.replace(pattern, '');
+    }
+
+    noteText = noteText
+        .replace(/\[INTERVAL\]/gi, '')
+        .replace(/\[DOM\]/gi, '')
+        .replace(/\[DOW\]/gi, '')
+        .replace(/\b(?:every|daily|weekly|monthly|yearly|recurring|repeats?|on|the|day|week|month|year|days|weeks|months|years|each|per)\b/gi, '')
+        .replace(/\b(?:add|new|record|at|for|of|total|spent|paid|bought|had|cost|was|i|just|about|dropped|blew|charged|used|got|received|earned|my)\b/gi, '')
+        .replace(/\b(?:usd|lkr|eur|gbp|jpy|rs\.?|₨|\$|€|£|¥|rupees?|bucks?)\b/gi, '')
+        .replace(/(^|\s)[\$€£¥₹](\s|$)/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 
     if (noteText.length > 1) {
         entities.note = noteText.charAt(0).toUpperCase() + noteText.slice(1);
-    }
-
-    // If we found a category in the text, prefer that as note if no other note
-    if (!entities.note && entities.category) {
+    } else if (entities.category) {
         entities.note = entities.category;
     }
 
@@ -514,7 +579,23 @@ function buildResponse(
             const note = extracted?.note || category;
             const date = extracted?.date || toLocalDateString(new Date());
 
-            answer = `I've prepared an expense for ${formatCurrency(amount, locale, currency)}. What category does it belong to? (e.g., Food, Transport)`;
+            const isDefaultCategory = category === 'Other';
+            if (isDefaultCategory) {
+              answer = `I've prepared an expense for ${formatCurrency(amount, locale, currency)}. What category does it belong to? (e.g., Food, Transport)`;
+              return {
+                answer,
+                actions: [],
+                pendingAction: {
+                  type: 'add_expense',
+                  data: {
+                    newExpense: { amount, currency, category, note, date },
+                  },
+                  confirmationText: `Add ${formatCurrency(amount, locale, currency)} expense for "${note}" (${category}) on ${formatDate(date)}?`,
+                }
+              } as ChatResponse;
+            }
+
+            answer = `I've prepared an expense for ${formatCurrency(amount, locale, currency)}. Confirm the details below.`;
             actions.push({
                 type: 'add_expense',
                 data: {
@@ -532,6 +613,22 @@ function buildResponse(
             const note = extracted?.note || category;
             const date = extracted?.date || toLocalDateString(new Date());
 
+            const isDefaultCategory = category === 'Other';
+            if (isDefaultCategory) {
+              answer = `I've recorded a new income for ${formatCurrency(amount, locale, currency)}. What category does it belong to? (e.g., Salary, Gift)`;
+              return {
+                answer,
+                actions: [],
+                pendingAction: {
+                  type: 'add_income',
+                  data: {
+                    newIncome: { amount, currency, category, note, date },
+                  },
+                  confirmationText: `Add ${formatCurrency(amount, locale, currency)} income "${note}" (${category}) on ${formatDate(date)}?`,
+                }
+              } as ChatResponse;
+            }
+
             answer = `I've recorded that you received ${formatCurrency(amount, locale, currency)} from ${extracted?.note}.`;
             actions.push({
                 type: 'add_income',
@@ -539,6 +636,40 @@ function buildResponse(
                     newIncome: { amount, currency, category, note, date },
                 },
                 confirmationText: `Add ${formatCurrency(amount, locale, currency)} income "${note}" (${category}) on ${formatDate(date)}?`,
+            });
+            break;
+        }
+
+        case 'add_recurring': {
+            const amount = extracted?.amount || 0;
+            const currency = extracted?.currency || baseCurrency;
+            const category = extracted?.category || classifyCategory(extracted?.note || '');
+            const note = extracted?.note || category;
+            const frequency = extracted?.frequency || 'monthly';
+            const interval = extracted?.interval || 1;
+            const date = extracted?.date || toLocalDateString(new Date());
+            
+            // Scheduling fields
+            const schedule = getRecurringSchedule(date, frequency);
+            const day_of_week = extracted?.day_of_week ?? schedule.day_of_week;
+            const day_of_month = extracted?.day_of_month ?? schedule.day_of_month;
+            const month_of_year = extracted?.month_of_year ?? schedule.month_of_year;
+
+            const isIncome = /\b(?:income|salary|paycheck|earned|received|deposited|made|salary|bonus|freelance)\b/i.test(originalQuery);
+            const type = isIncome ? 'income' : 'expense';
+
+            const freqStr = interval > 1 ? `every ${interval} ${frequency.replace('ly', 's')}` : frequency;
+            answer = `I've set up a ${freqStr} ${type} for ${formatCurrency(amount, locale, currency)} (${note}).`;
+            
+            actions.push({
+                type: 'add_recurring',
+                data: {
+                    newRecurring: { 
+                        type, amount, currency, category, note, frequency, interval, 
+                        start_date: date, day_of_week, day_of_month, month_of_year 
+                    },
+                },
+                confirmationText: `Add ${freqStr} ${type} of ${formatCurrency(amount, locale, currency)} for "${note}" starting ${formatDate(date)}?`,
             });
             break;
         }
@@ -749,6 +880,11 @@ function regexPrePass(text: string): IntentLabel | null {
         return 'edit_expense';
     }
 
+    // Recurring patterns (check before simple expense/income since they are more specific)
+    if (/\b(?:every|recurring|repeats?|monthly|weekly|daily|yearly)\b/i.test(lower) && /\d/.test(lower)) {
+        return 'add_recurring';
+    }
+
     // Income patterns (if it has an amount and an income keyword)
     if (/\b(?:got paid|received|earned|salary|paycheck|income|deposited|made|freelance|sold)\b/i.test(lower) && /\d/.test(lower)) {
         return 'add_income';
@@ -782,9 +918,47 @@ export async function processChat(
     incomeCategories: AICategory[] = [],
     incomes: Income[] = [],
     locale: string = 'en-LK',
-    baseCurrency: string = 'LKR'
+    baseCurrency: string = 'LKR',
+    history: ChatMessage[] = [],
+    pendingAction?: ChatAction
 ): Promise<ChatResponse> {
     console.log(`[LocalAI] Processing original: "${message}"`);
+
+    // Context handling: Check if this is a reply to a pending action
+    if (pendingAction && (pendingAction.type === 'add_expense' || pendingAction.type === 'add_income' || pendingAction.type === 'add_recurring')) {
+        // Try to see if message is a category
+        const cats = pendingAction.type === 'add_income' ? incomeCategories : expenseCategories;
+        const cat = classifyCategory(message, cats);
+        
+        // If the user replied with something that matched a category, or just a single word
+        // we'll assume they're confirming the category.
+        const isSingleWord = message.trim().split(/\s+/).length <= 2;
+        
+        if (cat !== 'Other' || isSingleWord) {
+            console.log(`[LocalAI] Resolving pending action with category: ${cat}`);
+            const updatedAction = { ...pendingAction };
+            if (updatedAction.data?.newExpense) {
+                updatedAction.data.newExpense.category = cat;
+                if (updatedAction.data.newExpense.note === 'Other') updatedAction.data.newExpense.note = cat;
+                updatedAction.confirmationText = `Add ${formatCurrency(updatedAction.data.newExpense.amount!, locale, updatedAction.data.newExpense.currency || baseCurrency)} expense for "${updatedAction.data.newExpense.note}" (${cat})?`;
+            } else if (updatedAction.data?.newIncome) {
+                updatedAction.data.newIncome.category = cat;
+                if (updatedAction.data.newIncome.note === 'Other') updatedAction.data.newIncome.note = cat;
+                updatedAction.confirmationText = `Add ${formatCurrency(updatedAction.data.newIncome.amount!, locale, updatedAction.data.newIncome.currency || baseCurrency)} income "${updatedAction.data.newIncome.note}" (${cat})?`;
+            } else if (updatedAction.data?.newRecurring) {
+                updatedAction.data.newRecurring.category = cat;
+                if (updatedAction.data.newRecurring.note === 'Other') updatedAction.data.newRecurring.note = cat;
+                const freq = updatedAction.data.newRecurring.frequency || 'monthly';
+                updatedAction.confirmationText = `Add ${freq} transaction for ${formatCurrency(updatedAction.data.newRecurring.amount!, locale, updatedAction.data.newRecurring.currency || baseCurrency)} (${cat})?`;
+            }
+            
+            return {
+                answer: `Got it, I've set the category to ${cat}. Should I save this?`,
+                actions: [updatedAction],
+                confidence: 1.0
+            };
+        }
+    }
     
     // Preprocess: convert number words to digits (e.g., "fifty thousand" -> 50000)
     const processedMessage = String(wordsToNumbers(message) || message);

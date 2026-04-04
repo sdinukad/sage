@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { db, LocalCategory } from './localdb';
-import { Expense, Income } from '@/shared/models';
+import { Expense, Income, RecurringTransaction } from '@/shared/models';
 
 /**
  * Optimistically adds an expense to the local IndexedDB.
@@ -9,11 +9,16 @@ import { Expense, Income } from '@/shared/models';
  */
 export async function syncAddExpense(expense: Expense) {
   // 1. 0ms optimistic UI write
-  await db.expenses.put({ ...expense, sync_status: 'pending_insert' });
+  const toSave = { 
+    ...expense, 
+    created_at: expense.created_at || new Date().toISOString(),
+    sync_status: 'pending_insert' as const 
+  };
+  await db.expenses.put(toSave);
   
   // 2. Background push
   try {
-    const { error } = await supabase.from('expenses').insert(expense);
+    const { error } = await supabase.from('expenses').insert(toSave);
     if (!error) {
       await db.expenses.update(expense.id, { sync_status: 'synced' });
     } else {
@@ -60,9 +65,14 @@ export async function syncDeleteExpense(id: string) {
 }
 
 export async function syncAddIncome(income: Income) {
-  await db.incomes.put({ ...income, sync_status: 'pending_insert' });
+  const toSave = { 
+    ...income, 
+    created_at: income.created_at || new Date().toISOString(),
+    sync_status: 'pending_insert' as const 
+  };
+  await db.incomes.put(toSave);
   try {
-    const { error } = await supabase.from('incomes').insert(income);
+    const { error } = await supabase.from('incomes').insert(toSave);
     if (!error) {
       await db.incomes.update(income.id, { sync_status: 'synced' });
     }
@@ -89,6 +99,42 @@ export async function syncDeleteIncome(id: string) {
     const { error } = await supabase.from('incomes').delete().eq('id', id);
     if (!error) {
       await db.incomes.delete(id);
+    }
+  } catch (e) {
+    console.log("Device offline, deletion queued locally.", e);
+  }
+}
+
+export async function syncAddRecurring(recurring: RecurringTransaction) {
+  await db.recurring_transactions.put({ ...recurring, sync_status: 'pending_insert' });
+  try {
+    const { error } = await supabase.from('recurring_transactions').insert(recurring);
+    if (!error) {
+      await db.recurring_transactions.update(recurring.id, { sync_status: 'synced' });
+    }
+  } catch (e) {
+    console.log("Device offline, recurring transaction queued locally.", e);
+  }
+}
+
+export async function syncUpdateRecurring(id: string, changes: Partial<RecurringTransaction>) {
+  await db.recurring_transactions.update(id as string, { ...changes, sync_status: 'pending_update' });
+  try {
+    const { error } = await supabase.from('recurring_transactions').update(changes).eq('id', id);
+    if (!error) {
+      await db.recurring_transactions.update(id as string, { sync_status: 'synced' });
+    }
+  } catch (e) {
+    console.log("Device offline, update queued locally.", e);
+  }
+}
+
+export async function syncDeleteRecurring(id: string) {
+  await db.recurring_transactions.update(id as string, { sync_status: 'pending_delete' });
+  try {
+    const { error } = await supabase.from('recurring_transactions').delete().eq('id', id);
+    if (!error) {
+      await db.recurring_transactions.delete(id as string);
     }
   } catch (e) {
     console.log("Device offline, deletion queued locally.", e);
@@ -212,7 +258,38 @@ export async function pushLocalData() {
     }
   }
 
-  console.log(`[Sync] Local push complete. Processed ${pendingExpenses.length} expenses and ${pendingIncomes.length} incomes.`);
+  // 3. Fetch all pending recurring transactions
+  const pendingRecurring = await db.recurring_transactions
+    .filter(r => r.sync_status !== 'synced')
+    .toArray();
+
+  if (pendingRecurring.length > 0) {
+    const toUpsert = pendingRecurring
+      .filter(r => r.sync_status === 'pending_insert' || r.sync_status === 'pending_update')
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .map(({ sync_status, ...rest }) => rest);
+    
+    if (toUpsert.length > 0) {
+      const { error } = await supabase.from('recurring_transactions').upsert(toUpsert);
+      if (!error) {
+        const ids = toUpsert.map(r => r.id);
+        await db.recurring_transactions.where('id').anyOf(ids).modify({ sync_status: 'synced' });
+      }
+    }
+
+    const toDelete = pendingRecurring
+      .filter(r => r.sync_status === 'pending_delete')
+      .map(r => r.id);
+    
+    if (toDelete.length > 0) {
+      const { error } = await supabase.from('recurring_transactions').delete().in('id', toDelete);
+      if (!error) {
+        await db.recurring_transactions.bulkDelete(toDelete);
+      }
+    }
+  }
+
+  console.log(`[Sync] Local push complete. Processed ${pendingExpenses.length} expenses, ${pendingIncomes.length} incomes, and ${pendingRecurring.length} recurring.`);
 }
 
 /**
@@ -270,6 +347,24 @@ export async function pullRemoteData() {
 
     const syncedCat = catRes.data.map(c => ({ ...(c as Omit<LocalCategory, 'sync_status'>), sync_status: 'synced' as const }));
     await db.categories.bulkPut(syncedCat);
+  }
+
+  // Recurring transactions pull
+  const recurringData = await fetchAllFromTable<RecurringTransaction>('recurring_transactions');
+  if (recurringData) {
+    const remoteIds = new Set(recurringData.map(r => r.id));
+    const localItems = await db.recurring_transactions.toArray();
+    const pendingIds = new Set(localItems.filter(r => r.sync_status !== 'synced').map(r => r.id));
+
+    const toDelete = localItems
+      .filter(r => r.sync_status === 'synced' && !remoteIds.has(r.id))
+      .map(r => r.id);
+    if (toDelete.length > 0) await db.recurring_transactions.bulkDelete(toDelete);
+
+    const syncedRec = recurringData
+      .filter(r => !pendingIds.has(r.id))
+      .map(r => ({ ...r, sync_status: 'synced' as const }));
+    await db.recurring_transactions.bulkPut(syncedRec);
   }
 }
 

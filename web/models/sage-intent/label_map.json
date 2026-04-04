@@ -4,13 +4,17 @@
     "add_income": 1,
     "edit_expense": 2,
     "edit_income": 3,
-    "query": 4
+    "query": 4,
+    "add_recurring": 5,
+    "edit_recurring": 6
   },
   "id2label": {
     "0": "add_expense",
     "1": "add_income",
     "2": "edit_expense",
     "3": "edit_income",
-    "4": "query"
+    "4": "query",
+    "5": "add_recurring",
+    "6": "edit_recurring"
   }
 }

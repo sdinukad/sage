@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { Expense, Income } from '@/shared/models';
+import { Expense, Income, RecurringTransaction } from '@/shared/models';
 import { useAuth } from './AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, LocalCategory } from '@/lib/localdb';
@@ -26,6 +26,8 @@ interface ExpenseDataContextType {
   refreshData: () => Promise<void>;
   addCategory: (name: string, type: 'expense' | 'income', color?: string, ai_hints?: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  recurringTransactions: RecurringTransaction[];
+  deleteRecurring: (id: string) => Promise<void>;
 }
 
 const defaultStats: DashboardStats = {
@@ -47,6 +49,8 @@ const ExpenseDataContext = createContext<ExpenseDataContextType>({
   refreshData: async () => {},
   addCategory: async () => {},
   deleteCategory: async () => {},
+  recurringTransactions: [],
+  deleteRecurring: async () => {},
 });
 
 export const ExpenseDataProvider = ({ children }: { children: React.ReactNode }) => {
@@ -56,6 +60,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
   const localExpenses = useLiveQuery(() => db.expenses.orderBy('date').reverse().toArray());
   const localIncomes = useLiveQuery(() => db.incomes.orderBy('date').reverse().toArray());
   const localCategories = useLiveQuery(() => db.categories.toArray());
+  const localRecurring = useLiveQuery(() => db.recurring_transactions.toArray());
 
   const expenses = useMemo(() => {
     const all = (localExpenses || []) as Expense[];
@@ -66,6 +71,10 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     const all = (localCategories || []) as LocalCategory[];
     return all.filter(c => c.sync_status !== 'pending_delete');
   }, [localCategories]);
+  const recurringTransactions = useMemo(() => {
+    const all = (localRecurring || []) as RecurringTransaction[];
+    return all.filter(r => (r as any).sync_status !== 'pending_delete');
+  }, [localRecurring]);
   const recentExpenses = useMemo(() => expenses.slice(0, 10), [expenses]);
   
   const [loading, setLoading] = useState(true);
@@ -129,6 +138,11 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     await syncDeleteCategory(id);
   }, []);
 
+  const deleteRecurring = useCallback(async (id: string) => {
+    const { syncDeleteRecurring } = await import('@/lib/sync');
+    await syncDeleteRecurring(id);
+  }, []);
+
   // Compute stats synchronously from local DB updates
   const stats = useMemo(() => {
     if (expenses.length === 0) return defaultStats;
@@ -179,8 +193,10 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     hasFetched: hasFetched || expenses.length > 0,
     refreshData: fetchSupabaseBackground,
     addCategory,
-    deleteCategory
-  }), [expenses, recentExpenses, incomes, categories, stats, loading, hasFetched, fetchSupabaseBackground, addCategory, deleteCategory]);
+    deleteCategory,
+    recurringTransactions,
+    deleteRecurring
+  }), [expenses, recentExpenses, incomes, categories, stats, loading, hasFetched, fetchSupabaseBackground, addCategory, deleteCategory, recurringTransactions, deleteRecurring]);
 
   return (
     <ExpenseDataContext.Provider value={value}>

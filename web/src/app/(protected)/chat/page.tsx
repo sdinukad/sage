@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Expense, Income, ChatAction, ChatResponse } from '@/shared/models';
+import { Expense, Income, RecurringTransaction, ChatAction, ChatResponse } from '@/shared/models';
 import { Send, Sparkles } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
 import ConfirmationCard from '@/components/ConfirmationCard';
 import { CATEGORY_COLORS } from '@/components/CategoryBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useExpenseData } from '@/context/ExpenseDataContext';
-import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome } from '@/lib/sync';
+import { syncAddExpense, syncUpdateExpense, syncAddIncome, syncUpdateIncome, syncAddRecurring } from '@/lib/sync';
 import { getRate } from '@/lib/exchange-rates';
 import { useSettings } from '@/context/SettingsContext';
 
@@ -18,7 +18,11 @@ interface Message {
   content: string;
   actions?: ChatAction[];
   resolvedActions?: string[];
+  pendingAction?: ChatAction;
+  isPending?: boolean;
 }
+
+import { ChatMessage } from '@/shared/models';
 
 type ChatMode = 'ask' | 'edit';
 
@@ -31,9 +35,35 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const [pendingAction, setPendingAction] = useState<ChatAction | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persistence: Load from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem('sage_chat_history');
+    if (saved) {
+      try {
+        const { messages: savedMsgs, pendingAction: savedPending } = JSON.parse(saved);
+        if (savedMsgs) setMessages(savedMsgs);
+        if (savedPending) setPendingAction(savedPending);
+      } catch (e) {
+        console.error('Failed to load chat history:', e);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Persistence: Save to sessionStorage on changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    sessionStorage.setItem('sage_chat_history', JSON.stringify({
+      messages,
+      pendingAction
+    }));
+  }, [messages, pendingAction, isLoaded]);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -111,6 +141,11 @@ export default function ChatPage() {
         body: JSON.stringify({
           message: text,
           mode,
+          history: messages.slice(-5).map(m => ({
+            role: m.type,
+            content: m.content
+          })),
+          pendingAction,
           expenseCategories: categories
             .filter((c) => c.type === 'expense')
             .map((c) => ({ name: c.name, hints: c.ai_hints })),
@@ -126,6 +161,7 @@ export default function ChatPage() {
       }
 
       const data: ChatResponse = await res.json();
+      setPendingAction(data.pendingAction || null);
 
       const msgId = Math.random().toString(36).substring(7);
       setMessages((prev) => [
@@ -136,6 +172,8 @@ export default function ChatPage() {
           content: data.answer,
           actions: data.actions || [],
           resolvedActions: [],
+          pendingAction: data.pendingAction,
+          isPending: !!data.pendingAction,
         },
       ]);
     } catch (e) {
@@ -217,6 +255,18 @@ export default function ChatPage() {
           action.data.editIncome.changes
         );
         success = true;
+      } else if (action.type === 'add_recurring' && action.data?.newRecurring) {
+        // syncAddRecurring handles the base amount and rate internally if needed,
+        // but here we follow the same pattern as add_expense for consistency if we had rates.
+        // For now, recurring entries use the provided currency and amount directly.
+        await syncAddRecurring({
+          ...action.data.newRecurring,
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          active: true,
+          created_at: new Date().toISOString(),
+        } as RecurringTransaction);
+        success = true;
       }
     } catch (err) {
       console.error('Action error:', err);
@@ -237,6 +287,8 @@ export default function ChatPage() {
         )
       );
       refreshData();
+      // If we confirmed an action that was pending, clear it
+      setPendingAction(null);
     }
   };
 
@@ -399,6 +451,7 @@ export default function ChatPage() {
                       'add_expense',
                       'add_income',
                       'edit_income',
+                      'add_recurring',
                     ].includes(action.type) &&
                     !isResolved
                   ) {

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { message, expenseCategories, incomeCategories } = await req.json();
+    const { message, expenseCategories, incomeCategories, history, pendingAction } = await req.json();
 
     // Initialize Supabase client
     const cookieStore = cookies();
@@ -58,7 +58,9 @@ export async function POST(req: Request) {
       incomeCategories || [],
       (incomes as Income[]) || [],
       locale,
-      currency
+      currency,
+      history || [],
+      pendingAction
     );
 
     // Fallback if local AI confidence is low or handled complex query
@@ -71,7 +73,9 @@ export async function POST(req: Request) {
         incomeCategories || [],
         (incomes as Income[]) || [],
         locale,
-        currency
+        currency,
+        history || [],
+        pendingAction
       );
       return NextResponse.json(geminiResult);
     }

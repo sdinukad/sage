@@ -26,6 +26,24 @@ export interface Income {
   user_id: string;
 }
 
+export interface RecurringTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  category: string;
+  note: string;
+  type: 'expense' | 'income';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  day_of_week?: number;    // 0-6
+  day_of_month?: number;   // 1-31
+  month_of_year?: number;  // 1-12
+  start_date: string;
+  active: boolean;
+  last_processed_date?: string;
+  created_at: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -62,13 +80,15 @@ export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
 ];
 
 export interface ChatAction {
-  type: 'query' | 'add' | 'edit' | 'add_expense' | 'add_income' | 'edit_expense' | 'edit_income' | 'unknown';
+  type: 'query' | 'add' | 'edit' | 'add_expense' | 'add_income' | 'edit_expense' | 'edit_income' | 'add_recurring' | 'edit_recurring' | 'unknown';
   data?: {
       matchedIds?: string[];
       newExpense?: Partial<Expense>;
       newIncome?: Partial<Income>;
+      newRecurring?: Partial<RecurringTransaction>;
       editExpense?: { id: string; changes: Partial<Expense> };
       editIncome?: { id: string; changes: Partial<Income> };
+      editRecurring?: { id: string; changes: Partial<RecurringTransaction> };
   };
   confirmationText?: string;
 }
@@ -76,4 +96,5 @@ export interface ChatAction {
 export interface ChatResponse {
   answer: string;
   actions: ChatAction[];
+  confidence?: number;
 }

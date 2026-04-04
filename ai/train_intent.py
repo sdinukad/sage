@@ -32,9 +32,11 @@ LABEL2ID = {
     "edit_expense": 2,
     "edit_income": 3,
     "query": 4,
+    "add_recurring": 5,
+    "edit_recurring": 6,
 }
 ID2LABEL = {v: k for k, v in LABEL2ID.items()}
-MODEL_NAME = "bert_tiny_cache"
+MODEL_NAME = "prajjwal1/bert-tiny"
 OUTPUT_DIR = "output/sage-intent"
 
 

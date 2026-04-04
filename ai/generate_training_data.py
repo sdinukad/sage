@@ -255,6 +255,27 @@ EDIT_INCOME_TEMPLATES = [
     "income was {amount} not {amount2}",
 ]
 
+# --- ADD_RECURRING templates ---
+
+ADD_RECURRING_TEMPLATES = [
+    "add recurring {category} {amount} every {frequency}",
+    "log a {frequency} {note} for {amount}",
+    "recurring {note} {amount} {frequency}",
+    "add a {frequency} {type} for {amount} on {note}",
+    "record a {amount} {note} every {frequency}",
+    "remind me to pay {amount} for {note} every {frequency}",
+    "i have a {frequency} {note} which costs {amount}",
+    "set up a {frequency} {type} of {amount} for {note}",
+    "add {amount} {note} to my recurring list every {frequency}",
+    "every {frequency} i spend {amount} on {note}",
+    "pay {amount} for {note} every {frequency}",
+    "automatic {type} of {amount} for {note} every {frequency}",
+    "i pay {amount} for {note} {frequency}",
+    "new recurring {note} {amount} {frequency}",
+    "repeating {type} {amount} {note} {frequency}",
+    "it repeats every {frequency} {amount} for {note}",
+]
+
 
 def gen_add_expense(n: int):
     examples = []
@@ -329,6 +350,23 @@ def gen_edit_income(n: int):
     return examples
 
 
+def gen_add_recurring(n: int):
+    examples = []
+    frequencies = ["day", "week", "month", "year", "daily", "weekly", "monthly", "yearly"]
+    types = ["expense", "income"]
+    for _ in range(n):
+        template = random.choice(ADD_RECURRING_TEMPLATES)
+        text = template.format(
+            amount=random.choice(AMOUNTS),
+            category=random.choice(EXPENSE_CATEGORIES if random.random() > 0.2 else INCOME_CATEGORIES),
+            note=random.choice(EXPENSE_NOTES),
+            frequency=random.choice(frequencies),
+            type=random.choice(types),
+        ).strip()
+        examples.append({"text": text, "label": "add_recurring"})
+    return examples
+
+
 def main():
     print("Generating synthetic training data...")
 
@@ -338,6 +376,7 @@ def main():
     data += gen_query(300)
     data += gen_edit_expense(200)
     data += gen_edit_income(100)
+    data += gen_add_recurring(150)
 
     random.shuffle(data)
 

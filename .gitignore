@@ -14,4 +14,3 @@ ai/bert_tiny_cache/
 
 # Ignore local handoff documents
 docs/handoffs/
-handoffs/

@@ -13,15 +13,19 @@
     "1": "add_income",
     "2": "edit_expense",
     "3": "edit_income",
-    "4": "query"
+    "4": "query",
+    "5": "add_recurring",
+    "6": "edit_recurring"
   },
   "initializer_range": 0.02,
   "intermediate_size": 512,
   "label2id": {
     "add_expense": 0,
     "add_income": 1,
+    "add_recurring": 5,
     "edit_expense": 2,
     "edit_income": 3,
+    "edit_recurring": 6,
     "query": 4
   },
   "layer_norm_eps": 1e-12,
