@@ -104,6 +104,17 @@ export default function ChatPage() {
     prevLoadingRef.current = loading;
   }, [loading]);
 
+  // Listener for global 'focus-chat-input' event (e.g. from AppShell's Cmd+K)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    };
+    window.addEventListener('focus-chat-input', handleFocus);
+    return () => window.removeEventListener('focus-chat-input', handleFocus);
+  }, []);
+
   const handleSend = async (text: string = input) => {
     if (!text.trim() || loading) return;
 
@@ -403,7 +414,7 @@ export default function ChatPage() {
                   (a: ChatAction) =>
                     a.type === 'query' && a.data?.matchedIds
                 ) && (
-                  <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x ml-2 my-2 transition-all">
+                  <div className="flex gap-3 overflow-x-auto thin-scrollbar pb-3 snap-x ml-2 my-2 transition-all">
                     {expenses
                       .filter((e) =>
                         msg.actions
@@ -513,7 +524,7 @@ export default function ChatPage() {
             placeholder={
               isOffline
                 ? 'You are offline. Reconnect to chat…'
-                : 'Log an expense or ask about your finances…'
+                : 'Log an expense or ask Sage…'
             }
             value={input}
             disabled={isOffline || loading}

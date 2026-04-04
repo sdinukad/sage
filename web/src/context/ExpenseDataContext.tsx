@@ -175,10 +175,7 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
       vsLastMonth,
       expenseCount: thisMonthData.length,
       topCategory,
-      breakdown: [
-        { category: 'All', amount: monthTotal },
-        ...sortedCategories.map(([category, amount]) => ({ category, amount })),
-      ],
+      breakdown: sortedCategories.map(([category, amount]) => ({ category, amount })),
     };
   }, [expenses]);
 

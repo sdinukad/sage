@@ -21,6 +21,10 @@ export default function ProtectedLayout({
     }
   }, [user, loading, router]);
 
+  if (loading || !user) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   return (
     <AppShell>
       <ExpenseDataProvider>

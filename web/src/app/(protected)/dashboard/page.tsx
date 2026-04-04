@@ -69,8 +69,8 @@ export default function Dashboard() {
         </div>
 
         {/* Mobile section heading */}
-        <div className="mb-4 lg:hidden">
-          <h1 className="font-serif text-[20px] font-semibold text-on-surface">Overview</h1>
+        <div className="mb-6 lg:hidden">
+          <h1 className="font-serif text-[24px] font-semibold text-on-surface">Overview</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -80,7 +80,7 @@ export default function Dashboard() {
               Spending by Category
             </h2>
             <div
-              className="p-5 flex flex-col gap-6 rounded-2xl h-full"
+              className="p-5 flex flex-col gap-6 rounded-2xl h-full animate-in"
               style={{
                 backgroundColor: 'var(--surface)',
                 border: '1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent)',
@@ -149,11 +149,11 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                     {/* Center label */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold opacity-60">
-                        Total
+                      <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-bold opacity-50">
+                        Spent
                       </span>
-                      <span className="font-mono text-[17px] text-on-surface font-bold mt-0.5">
-                        {formatCompact(stats.totalThisMonth)}
+                      <span className={`font-mono text-on-surface font-bold mt-0.5 ${stats.totalThisMonth >= 100000 ? 'text-[14px]' : 'text-[18px]'}`}>
+                        {formatCurrency(stats.totalThisMonth)}
                       </span>
                     </div>
                   </div>
@@ -199,16 +199,31 @@ export default function Dashboard() {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-[200px] gap-3">
+                <div className="flex flex-col items-center justify-center h-[240px] gap-4 text-center">
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: 'var(--surface-container)' }}
+                    className="w-14 h-14 rounded-3xl flex items-center justify-center text-3xl"
+                    style={{ backgroundColor: 'var(--surface-container-high)' }}
                   >
-                    📊
+                    🌱
                   </div>
-                  <p className="text-on-surface-variant text-[14px]">
-                    No expenses this month
-                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-on-surface font-semibold text-[15px]">
+                      No expenses yet
+                    </p>
+                    <p className="text-on-surface-variant text-[13px] max-w-[200px]">
+                      Ask Sage to log your first transaction
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => window.location.href = '/chat'}
+                    className="mt-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:scale-105 active:scale-95"
+                    style={{
+                      backgroundColor: 'var(--primary)',
+                      color: 'var(--on-primary)',
+                    }}
+                  >
+                    Chat with Sage
+                  </button>
                 </div>
               )}
             </div>
@@ -220,7 +235,7 @@ export default function Dashboard() {
               Daily Spend — Last 7 Days
             </h2>
             <div
-              className="h-[320px] lg:h-full min-h-[300px] p-5 pt-7 rounded-2xl"
+              className="h-[320px] lg:h-full min-h-[300px] p-5 pt-7 rounded-2xl animate-in delay-100"
               style={{
                 backgroundColor: 'var(--surface)',
                 border: '1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent)',

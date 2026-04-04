@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   House,
   Clock,
@@ -68,23 +68,29 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
         backgroundColor: 'var(--surface)',
       }}
     >
-      {/* Logo */}
       <div className="px-5 pt-7 pb-6">
-        <div className="flex items-baseline gap-2">
-          <span className="font-serif text-[22px] font-semibold text-on-surface tracking-tight">
-            Sage
-          </span>
-          <span
-            className="text-[9px] font-semibold uppercase tracking-[0.12em] px-1.5 py-0.5 rounded-full"
-            style={{
-              backgroundColor: 'var(--primary-container)',
-              color: 'var(--on-primary-container)',
-            }}
-          >
-            AI
-          </span>
+        <div className="flex items-center gap-3">
+          <img 
+            src="/icon.png" 
+            alt="Sage Logo" 
+            className="w-8 h-8 rounded-[10px] shadow-sm object-contain dark:shadow-[0_0_15px_rgba(45,92,58,0.4)] transition-all" 
+          />
+          <div className="flex items-baseline gap-2">
+            <span className="font-serif text-[22px] font-semibold text-on-surface tracking-tight">
+              Sage
+            </span>
+            <span
+              className="text-[9px] font-semibold uppercase tracking-[0.12em] px-1.5 py-0.5 rounded-full"
+              style={{
+                backgroundColor: 'var(--primary-container)',
+                color: 'var(--on-primary-container)',
+              }}
+            >
+              AI
+            </span>
+          </div>
         </div>
-        <p className="text-[11px] text-on-surface-variant mt-1 opacity-60">
+        <p className="text-[11px] text-on-surface-variant mt-1.5 opacity-60 ml-11">
           Personal Finance
         </p>
       </div>
@@ -132,6 +138,11 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
                 }`}
               />
               <span>{label}</span>
+              {label === 'Chat' && (
+                <span className="ml-2 py-0.5 px-1.5 rounded border border-outline-variant/30 text-[9px] font-mono opacity-50 group-hover:opacity-100 transition-opacity">
+                  ⌘K
+                </span>
+              )}
               {isActive && (
                 <span
                   className="ml-auto w-1.5 h-1.5 rounded-full"
@@ -172,7 +183,14 @@ function MobileHeader() {
         borderBottom: '1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent)',
       }}
     >
-      <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
+      <div className="flex items-center gap-2.5">
+        <img 
+          src="/icon.png" 
+          alt="Sage Logo" 
+          className="w-7 h-7 rounded-lg shadow-sm dark:shadow-[0_0_12px_rgba(45,92,58,0.35)] transition-all" 
+        />
+        <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
+      </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
       </div>
@@ -225,6 +243,7 @@ interface AppShellProps {
 
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const pathname = usePathname();
+  const router = useRouter();
   useAuth();
   const [isOffline, setIsOffline] = useState(false);
 
@@ -242,6 +261,25 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Keyboard shortcut for Chat: Cmd/Ctrl + K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (pathname !== '/chat') {
+          router.push('/chat');
+        }
+        // Give the page a moment to mount if navigating, then focus
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('focus-chat-input'));
+        }, 100);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pathname, router]);
 
   const isChatPage = pathname === '/chat';
 

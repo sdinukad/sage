@@ -25,10 +25,10 @@ const HeroCard: React.FC<HeroCardProps> = ({ amount, vsLastMonth, expenseCount, 
 
   return (
     <div
-      className="mx-4 mt-6 mb-4 rounded-2xl overflow-hidden"
+      className="mx-4 mt-6 mb-4 rounded-3xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl group animate-in opacity-0"
       style={{
-        background: 'linear-gradient(145deg, var(--primary-container) 0%, var(--surface-container) 100%)',
-        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--outline-variant))',
+        background: 'linear-gradient(135deg, var(--primary-container) 0%, var(--surface-container-low) 50%, var(--surface-container) 100%)',
+        border: '1px solid color-mix(in srgb, var(--primary) 15%, var(--outline-variant))',
       }}
     >
       <div className="px-6 pt-6 pb-7">

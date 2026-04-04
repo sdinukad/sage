@@ -24,6 +24,14 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: "Sage - Your money, made clear",
   description: "Personal expense tracker with AI suggestions",
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '512x512' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '512x512' },
+    ],
+  },
   appleWebApp: {
     title: "Sage",
     statusBarStyle: "default",
