@@ -10,7 +10,8 @@ const MODELS = [
     'gemma-3-1b-it',
 ];
 
-// Initialize the SDK
+// Initialize the SDK with the API Key, but we will explicitly propagate it
+// to the x-goog-api-key header in requestOptions to ensure proxies log it correctly if required
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 interface GeminiResponse {
@@ -24,9 +25,11 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
     for (const modelName of MODELS) {
         try {
             console.log(`Calling Gemini SDK with model: ${modelName}...`);
-            const model = genAI.getGenerativeModel({ 
-                model: modelName
-            });
+            const model = genAI.getGenerativeModel(
+                { model: modelName },
+                { customHeaders: { 'x-goog-api-key': process.env.GEMINI_API_KEY || '' }}
+            );
+
             
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
@@ -215,9 +218,10 @@ export async function processSageChatStream(
     for (const modelName of MODELS) {
         try {
             console.log(`Attempting streaming with model: ${modelName}...`);
-            const model = genAI.getGenerativeModel({ 
-                model: modelName
-            });
+            const model = genAI.getGenerativeModel(
+                { model: modelName },
+                { customHeaders: { 'x-goog-api-key': process.env.GEMINI_API_KEY || '' }}
+            );
             
             const result = await model.generateContentStream(prompt);
             
