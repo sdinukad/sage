@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -71,12 +71,11 @@ function DesktopSidebar({ pathname }: { pathname: string }) {
     >
       <div className="px-5 pt-7 pb-6">
         <div className="flex items-center gap-3">
-          <Image 
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
             src="/icon.png" 
             alt="Sage Logo" 
-            width={32}
-            height={32}
-            className="rounded-[10px] shadow-sm object-contain dark:shadow-[0_0_15px_rgba(45,92,58,0.4)] transition-all" 
+            className="w-8 h-8 rounded-[10px] shadow-sm object-contain dark:shadow-[0_0_15px_rgba(45,92,58,0.4)] transition-all" 
           />
           <div className="flex items-baseline gap-2">
             <span className="font-serif text-[22px] font-semibold text-on-surface tracking-tight">
@@ -187,12 +186,11 @@ function MobileHeader() {
       }}
     >
       <div className="flex items-center gap-2.5">
-        <Image 
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
           src="/icon.png" 
           alt="Sage Logo" 
-          width={28}
-          height={28}
-          className="rounded-lg shadow-sm dark:shadow-[0_0_12px_rgba(45,92,58,0.35)] transition-all" 
+          className="w-7 h-7 rounded-lg shadow-sm dark:shadow-[0_0_12px_rgba(45,92,58,0.35)] transition-all" 
         />
         <span className="font-serif text-[20px] font-semibold text-on-surface">Sage</span>
       </div>

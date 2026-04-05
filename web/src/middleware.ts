@@ -73,5 +73,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Exclude _next/static, _next/image, favicon, AND all /api/* routes.
   // API routes handle their own auth server-side — no need for middleware.
-  matcher: ['/((?!_next/static|_next/image|favicon\.ico|api/).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)'],
 };
