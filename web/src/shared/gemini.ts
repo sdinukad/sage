@@ -26,8 +26,7 @@ async function callGemini(prompt: string): Promise<GeminiResponse> {
         try {
             console.log(`Calling Gemini SDK with model: ${modelName}...`);
             const model = genAI.getGenerativeModel(
-                { model: modelName },
-                { customHeaders: { 'x-goog-api-key': process.env.GEMINI_API_KEY || '' }}
+                { model: modelName }
             );
 
             
@@ -219,8 +218,7 @@ export async function processSageChatStream(
         try {
             console.log(`Attempting streaming with model: ${modelName}...`);
             const model = genAI.getGenerativeModel(
-                { model: modelName },
-                { customHeaders: { 'x-goog-api-key': process.env.GEMINI_API_KEY || '' }}
+                { model: modelName }
             );
             
             const result = await model.generateContentStream(prompt);
