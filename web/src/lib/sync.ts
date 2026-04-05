@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { db, LocalCategory } from './localdb';
+import { db, LocalCategory, LocalExpense, LocalIncome, LocalRecurringTransaction } from './localdb';
 import { Expense, Income, RecurringTransaction } from '@/shared/models';
 
 /**
@@ -38,7 +38,7 @@ export async function syncUpdateExpense(id: string, changes: Partial<Expense>) {
   try {
     if (isPendingInsert) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { sync_status, ...payload } = { ...existing, ...changes } as LocalExpense;
       const { error } = await supabase.from('expenses').upsert(payload);
       if (!error) {
         await db.expenses.update(id, { sync_status: 'synced' });
@@ -98,7 +98,7 @@ export async function syncUpdateIncome(id: string, changes: Partial<Income>) {
   try {
     if (isPendingInsert) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { sync_status, ...payload } = { ...existing, ...changes } as LocalIncome;
       const { error } = await supabase.from('incomes').upsert(payload);
       if (!error) {
         await db.incomes.update(id, { sync_status: 'synced' });
@@ -146,7 +146,7 @@ export async function syncUpdateRecurring(id: string, changes: Partial<Recurring
   try {
     if (isPendingInsert) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { sync_status, ...payload } = { ...existing, ...changes } as LocalRecurringTransaction;
       const { error } = await supabase.from('recurring_transactions').upsert(payload);
       if (!error) {
         await db.recurring_transactions.update(id as string, { sync_status: 'synced' });
