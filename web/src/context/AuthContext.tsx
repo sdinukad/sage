@@ -27,9 +27,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // 1. Initial Session Check (Done ONCE)
     const initAuth = async () => {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(user ?? null);
       } catch (error) {
         console.error('AuthContext: Error initializing auth:', error);
       } finally {
@@ -40,9 +41,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initAuth();
 
     // 2. Listen for Auth State Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 

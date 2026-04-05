@@ -103,19 +103,23 @@ export async function processSageChat(
     3. ADD_INCOME: Record a new income.
     4. EDIT_EXPENSE: Modify an existing expense.
     5. EDIT_INCOME: Modify an existing income.
+    6. ADD_RECURRING: Setup a recurring expense or income (e.g. "every month", "every week").
+    7. EDIT_RECURRING: Modify an existing recurring transaction template.
 
     Return ONLY this JSON structure:
     {
         "answer": "A human-like greeting and summary. If the user provided missing info for a pending action, acknowledge it.",
         "actions": [
             {
-                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
+                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "add_recurring" | "edit_recurring" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
                     "newExpense": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
                     "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
+                    "newRecurring": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "type": "expense"|"income", "frequency": "daily"|"weekly"|"monthly"|"yearly", "interval": number, "day_of_week": number, "day_of_month": number, "month_of_year": number, "start_date": "ISO string" },
                     "editExpense": { "id": "uuid", "changes": { ... } },
-                    "editIncome": { "id": "uuid", "changes": { ... } }
+                    "editIncome": { "id": "uuid", "changes": { ... } },
+                    "editRecurring": { "id": "uuid", "changes": { ... } }
                 },
                 "confirmationText": "Clear confirmation question for this action"
             }
@@ -188,19 +192,23 @@ export async function processSageChatStream(
     3. ADD_INCOME: Record a new income.
     4. EDIT_EXPENSE: Modify an existing expense.
     5. EDIT_INCOME: Modify an existing income.
+    6. ADD_RECURRING: Setup a recurring expense or income (e.g. "every month", "every week").
+    7. EDIT_RECURRING: Modify an existing recurring transaction template.
 
     Return ONLY this JSON structure:
     {
         "answer": "A human-like greeting and summary",
         "actions": [
             {
-                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "unknown",
+                "type": "query" | "add_expense" | "add_income" | "edit_expense" | "edit_income" | "add_recurring" | "edit_recurring" | "unknown",
                 "data": {
                     "matchedIds": ["uuid", ...],
                     "newExpense": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "date": "ISO string" },
                     "newIncome": { "amount": number, "currency": "USD"|"LKR"|..., "category": "Salary"|"Bonus"|"Investment"|"Gift"|"Other", "note": "...", "date": "ISO string" },
+                    "newRecurring": { "amount": number, "currency": "USD"|"LKR"|..., "category": "...", "note": "...", "type": "expense"|"income", "frequency": "daily"|"weekly"|"monthly"|"yearly", "interval": number, "day_of_week": number, "day_of_month": number, "month_of_year": number, "start_date": "ISO string" },
                     "editExpense": { "id": "uuid", "changes": { ... } },
-                    "editIncome": { "id": "uuid", "changes": { ... } }
+                    "editIncome": { "id": "uuid", "changes": { ... } },
+                    "editRecurring": { "id": "uuid", "changes": { ... } }
                 },
                 "confirmationText": "Clear confirmation question for this action"
             }

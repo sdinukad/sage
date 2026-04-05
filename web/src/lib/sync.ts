@@ -29,16 +29,25 @@ export async function syncAddExpense(expense: Expense) {
   }
 }
 
-/**
- * Optimistically updates an expense in the local DB.
- */
 export async function syncUpdateExpense(id: string, changes: Partial<Expense>) {
-  await db.expenses.update(id, { ...changes, sync_status: 'pending_update' });
+  const existing = await db.expenses.get(id);
+  const isPendingInsert = existing?.sync_status === 'pending_insert';
+
+  await db.expenses.update(id, { ...changes, sync_status: isPendingInsert ? 'pending_insert' : 'pending_update' });
   
   try {
-    const { error } = await supabase.from('expenses').update(changes).eq('id', id);
-    if (!error) {
-      await db.expenses.update(id, { sync_status: 'synced' });
+    if (isPendingInsert) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { error } = await supabase.from('expenses').upsert(payload);
+      if (!error) {
+        await db.expenses.update(id, { sync_status: 'synced' });
+      }
+    } else {
+      const { data, error } = await supabase.from('expenses').update(changes).eq('id', id).select('id');
+      if (!error && data && data.length > 0) {
+        await db.expenses.update(id, { sync_status: 'synced' });
+      }
     }
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
@@ -82,11 +91,23 @@ export async function syncAddIncome(income: Income) {
 }
 
 export async function syncUpdateIncome(id: string, changes: Partial<Income>) {
-  await db.incomes.update(id, { ...changes, sync_status: 'pending_update' });
+  const existing = await db.incomes.get(id);
+  const isPendingInsert = existing?.sync_status === 'pending_insert';
+
+  await db.incomes.update(id, { ...changes, sync_status: isPendingInsert ? 'pending_insert' : 'pending_update' });
   try {
-    const { error } = await supabase.from('incomes').update(changes).eq('id', id);
-    if (!error) {
-      await db.incomes.update(id, { sync_status: 'synced' });
+    if (isPendingInsert) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { error } = await supabase.from('incomes').upsert(payload);
+      if (!error) {
+        await db.incomes.update(id, { sync_status: 'synced' });
+      }
+    } else {
+      const { data, error } = await supabase.from('incomes').update(changes).eq('id', id).select('id');
+      if (!error && data && data.length > 0) {
+        await db.incomes.update(id, { sync_status: 'synced' });
+      }
     }
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
@@ -118,11 +139,23 @@ export async function syncAddRecurring(recurring: RecurringTransaction) {
 }
 
 export async function syncUpdateRecurring(id: string, changes: Partial<RecurringTransaction>) {
-  await db.recurring_transactions.update(id as string, { ...changes, sync_status: 'pending_update' });
+  const existing = await db.recurring_transactions.get(id);
+  const isPendingInsert = existing?.sync_status === 'pending_insert';
+
+  await db.recurring_transactions.update(id as string, { ...changes, sync_status: isPendingInsert ? 'pending_insert' : 'pending_update' });
   try {
-    const { error } = await supabase.from('recurring_transactions').update(changes).eq('id', id);
-    if (!error) {
-      await db.recurring_transactions.update(id as string, { sync_status: 'synced' });
+    if (isPendingInsert) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { sync_status, ...payload } = { ...existing, ...changes } as any;
+      const { error } = await supabase.from('recurring_transactions').upsert(payload);
+      if (!error) {
+        await db.recurring_transactions.update(id as string, { sync_status: 'synced' });
+      }
+    } else {
+      const { data, error } = await supabase.from('recurring_transactions').update(changes).eq('id', id).select('id');
+      if (!error && data && data.length > 0) {
+        await db.recurring_transactions.update(id as string, { sync_status: 'synced' });
+      }
     }
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
@@ -297,10 +330,11 @@ export async function pushLocalData() {
  * Only overwrites locally if the local item isn't pending an upload.
  */
 export async function pullRemoteData() {
-  const [expData, incData, catRes] = await Promise.all([
+  const [expData, incData, catRes, recurringData] = await Promise.all([
     fetchAllFromTable<Expense>('expenses', 'date'),
     fetchAllFromTable<Income>('incomes', 'date'),
-    supabase.from('categories').select('*') // Categories rarely exceed 1000
+    supabase.from('categories').select('*'), // Categories rarely exceed 1000
+    fetchAllFromTable<RecurringTransaction>('recurring_transactions')
   ]);
 
   if (expData) {
@@ -350,7 +384,6 @@ export async function pullRemoteData() {
   }
 
   // Recurring transactions pull
-  const recurringData = await fetchAllFromTable<RecurringTransaction>('recurring_transactions');
   if (recurringData) {
     const remoteIds = new Set(recurringData.map(r => r.id));
     const localItems = await db.recurring_transactions.toArray();

@@ -31,15 +31,15 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { data: profile } = await supabase
       .from('profiles')
       .select('locale, currency')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
     const locale = profile?.locale || 'en-LK';

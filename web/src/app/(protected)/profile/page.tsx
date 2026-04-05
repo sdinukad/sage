@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { LogOut, Loader2, Tag, ChevronRight, Palette, Coins } from 'lucide-react';
-import RecurringList from '@/components/RecurringList';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -267,16 +266,6 @@ export default function ProfilePage() {
                   <span className="font-medium text-[15px]">Log Out</span>
                 </div>
               </button>
-            </div>
-          </div>
-
-          {/* ── Recurring Transactions ── */}
-          <div className="flex flex-col gap-2">
-            <h2 className="section-label px-1">Recurring Transactions</h2>
-            <div
-              className="overflow-hidden rounded-2xl"
-            >
-              <RecurringList />
             </div>
           </div>
 

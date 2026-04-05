@@ -36,6 +36,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [pendingAction, setPendingAction] = useState<ChatAction | null>(null);
+  const [processingActions, setProcessingActions] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -205,6 +206,9 @@ export default function ChatPage() {
   };
 
   const handleConfirmAction = async (msgId: string, actionIndex: number) => {
+    const actionKey = `${msgId}-${actionIndex}`;
+    if (processingActions[actionKey]) return;
+
     const msg = messages.find((m) => m.id === msgId);
     if (!msg || !msg.actions) return;
     const action = msg.actions[actionIndex];
@@ -212,95 +216,95 @@ export default function ChatPage() {
 
     if (!user) return;
 
-    let success = false;
-    try {
-      if (action.type === 'edit_expense' && action.data?.editExpense) {
-        await syncUpdateExpense(
-          action.data.editExpense.id,
-          action.data.editExpense.changes
-        );
-        success = true;
-      } else if (action.type === 'add_expense' && action.data?.newExpense) {
-        const date = action.data.newExpense.date || new Date().toISOString().split('T')[0];
-        const extCurrency = action.data.newExpense.currency || currency;
-        const amount = Number(action.data.newExpense.amount || 0);
-        
-        const rate = await getRate(extCurrency, currency, date);
-        const base_amount = Number((amount * rate).toFixed(2));
+    setProcessingActions(prev => ({ ...prev, [actionKey]: true }));
+    
+    // 0ms Optimistic UI: Mark as resolved immediately
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId
+          ? {
+              ...m,
+              resolvedActions: [
+                ...(m.resolvedActions || []),
+                actionIndex.toString(),
+              ],
+            }
+          : m
+      )
+    );
+    setPendingAction(null);
 
-        await syncAddExpense({
-          ...action.data.newExpense,
-          id: crypto.randomUUID(),
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-          date,
-          currency: extCurrency,
-          base_currency: currency,
-          base_amount,
-          exchange_rate: rate,
-        } as Expense);
-        success = true;
-      } else if (action.type === 'add_income' && action.data?.newIncome) {
-        const date = action.data.newIncome.date || new Date().toISOString().split('T')[0];
-        const extCurrency = action.data.newIncome.currency || currency;
-        const amount = Number(action.data.newIncome.amount || 0);
-        
-        const rate = await getRate(extCurrency, currency, date);
-        const base_amount = Number((amount * rate).toFixed(2));
+    // Background task (async but non-blocking for the UI)
+    (async () => {
+      try {
+        if (action.type === 'edit_expense' && action.data?.editExpense) {
+          await syncUpdateExpense(
+            action.data.editExpense.id,
+            action.data.editExpense.changes
+          );
+        } else if (action.type === 'add_expense' && action.data?.newExpense) {
+          const date = action.data.newExpense.date || new Date().toISOString().split('T')[0];
+          const extCurrency = action.data.newExpense.currency || currency;
+          const amount = Number(action.data.newExpense.amount || 0);
+          
+          const rate = await getRate(extCurrency, currency, date);
+          const base_amount = Number((amount * rate).toFixed(2));
 
-        await syncAddIncome({
-          ...action.data.newIncome,
-          id: crypto.randomUUID(),
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-          date,
-          currency: extCurrency,
-          base_currency: currency,
-          base_amount,
-          exchange_rate: rate,
-        } as Income);
-        success = true;
-      } else if (action.type === 'edit_income' && action.data?.editIncome) {
-        await syncUpdateIncome(
-          action.data.editIncome.id,
-          action.data.editIncome.changes
-        );
-        success = true;
-      } else if (action.type === 'add_recurring' && action.data?.newRecurring) {
-        // syncAddRecurring handles the base amount and rate internally if needed,
-        // but here we follow the same pattern as add_expense for consistency if we had rates.
-        // For now, recurring entries use the provided currency and amount directly.
-        await syncAddRecurring({
-          ...action.data.newRecurring,
-          id: crypto.randomUUID(),
-          user_id: user.id,
-          active: true,
-          created_at: new Date().toISOString(),
-        } as RecurringTransaction);
-        success = true;
+          await syncAddExpense({
+            ...action.data.newExpense,
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+            date,
+            currency: extCurrency,
+            base_currency: currency,
+            base_amount,
+            exchange_rate: rate,
+          } as Expense);
+        } else if (action.type === 'add_income' && action.data?.newIncome) {
+          const date = action.data.newIncome.date || new Date().toISOString().split('T')[0];
+          const extCurrency = action.data.newIncome.currency || currency;
+          const amount = Number(action.data.newIncome.amount || 0);
+          
+          const rate = await getRate(extCurrency, currency, date);
+          const base_amount = Number((amount * rate).toFixed(2));
+
+          await syncAddIncome({
+            ...action.data.newIncome,
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+            date,
+            currency: extCurrency,
+            base_currency: currency,
+            base_amount,
+            exchange_rate: rate,
+          } as Income);
+        } else if (action.type === 'edit_income' && action.data?.editIncome) {
+          await syncUpdateIncome(
+            action.data.editIncome.id,
+            action.data.editIncome.changes
+          );
+        } else if (action.type === 'add_recurring' && action.data?.newRecurring) {
+          await syncAddRecurring({
+            ...action.data.newRecurring,
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            active: true,
+            created_at: new Date().toISOString(),
+          } as RecurringTransaction);
+        }
+        refreshData();
+      } catch (err) {
+        console.error('Action background error:', err);
+      } finally {
+        setProcessingActions(prev => {
+          const next = { ...prev };
+          delete next[actionKey];
+          return next;
+        });
       }
-    } catch (err) {
-      console.error('Action error:', err);
-    }
-
-    if (success) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === msgId
-            ? {
-                ...m,
-                resolvedActions: [
-                  ...(m.resolvedActions || []),
-                  actionIndex.toString(),
-                ],
-              }
-            : m
-        )
-      );
-      refreshData();
-      // If we confirmed an action that was pending, clear it
-      setPendingAction(null);
-    }
+    })();
   };
 
   const examplePrompts = [
@@ -473,6 +477,7 @@ export default function ChatPage() {
                       >
                         <ConfirmationCard
                           text={action.confirmationText || ''}
+                          loading={processingActions[`${msg.id}-${idx}`]}
                           onConfirm={() => handleConfirmAction(msg.id, idx)}
                           onCancel={() =>
                             setMessages((prev) =>

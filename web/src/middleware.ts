@@ -54,16 +54,16 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const protectedPaths = ['/dashboard', '/history', '/chat'];
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
-  if (!session && isProtectedPath) {
+  if (!user && isProtectedPath) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
     return NextResponse.redirect(new URL('/chat', request.url));
   }
 

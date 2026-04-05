@@ -31,15 +31,15 @@ export async function POST(req: Request) {
       }
     );
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const [ { data: incomes }, { data: expenses }, { data: profile } ] = await Promise.all([
       supabase.from('incomes').select('*').order('date', { ascending: false }),
       supabase.from('expenses').select('*').order('date', { ascending: false }),
-      supabase.from('profiles').select('locale, currency').eq('id', session.user.id).single()
+      supabase.from('profiles').select('locale, currency').eq('id', user.id).single()
     ]);
 
     const locale = profile?.locale || 'en-LK';
