@@ -39,26 +39,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initAuth();
 
-    // Safety fallback: ensure loading is cleared even on very slow networks
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
-
     // 2. Listen for Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
-      if (session) {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-      } else {
-        setUser(null);
-      }
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
     };
   }, []);
 
