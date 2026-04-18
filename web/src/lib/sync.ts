@@ -2,6 +2,12 @@ import { supabase } from './supabase';
 import { db, LocalCategory, LocalExpense, LocalIncome, LocalRecurringTransaction } from './localdb';
 import { Expense, Income, RecurringTransaction } from '@/shared/models';
 
+function triggerGlobalSync() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('sage_sync_requested'));
+  }
+}
+
 /**
  * Optimistically adds an expense to the local IndexedDB.
  * The UI (`useLiveQuery`) will instantly update in 0ms.
@@ -27,6 +33,7 @@ export async function syncAddExpense(expense: Expense) {
   } catch (e) {
     console.log("Device offline, expense queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncUpdateExpense(id: string, changes: Partial<Expense>) {
@@ -52,6 +59,7 @@ export async function syncUpdateExpense(id: string, changes: Partial<Expense>) {
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 /**
@@ -71,6 +79,7 @@ export async function syncDeleteExpense(id: string) {
   } catch (e) {
     console.log("Device offline, deletion queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncAddIncome(income: Income) {
@@ -88,6 +97,7 @@ export async function syncAddIncome(income: Income) {
   } catch (e) {
     console.log("Device offline, income queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncUpdateIncome(id: string, changes: Partial<Income>) {
@@ -112,6 +122,7 @@ export async function syncUpdateIncome(id: string, changes: Partial<Income>) {
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncDeleteIncome(id: string) {
@@ -124,6 +135,7 @@ export async function syncDeleteIncome(id: string) {
   } catch (e) {
     console.log("Device offline, deletion queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncAddRecurring(recurring: RecurringTransaction) {
@@ -136,6 +148,7 @@ export async function syncAddRecurring(recurring: RecurringTransaction) {
   } catch (e) {
     console.log("Device offline, recurring transaction queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncUpdateRecurring(id: string, changes: Partial<RecurringTransaction>) {
@@ -160,6 +173,7 @@ export async function syncUpdateRecurring(id: string, changes: Partial<Recurring
   } catch (e) {
     console.log("Device offline, update queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncDeleteRecurring(id: string) {
@@ -172,6 +186,7 @@ export async function syncDeleteRecurring(id: string) {
   } catch (e) {
     console.log("Device offline, deletion queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncAddCategory(category: Omit<LocalCategory, 'sync_status'>) {
@@ -182,6 +197,7 @@ export async function syncAddCategory(category: Omit<LocalCategory, 'sync_status
   } catch (e) {
     console.log("Offline, category queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 export async function syncDeleteCategory(id: string) {
@@ -192,6 +208,7 @@ export async function syncDeleteCategory(id: string) {
   } catch (e) {
     console.log("Offline, category deletion queued locally.", e);
   }
+  triggerGlobalSync();
 }
 
 async function fetchAllFromTable<T>(table: string, orderBy?: string): Promise<T[]> {

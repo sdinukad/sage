@@ -5,7 +5,7 @@ import { Expense, Income, RecurringTransaction } from '@/shared/models';
 import { useAuth } from './AuthContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, LocalCategory } from '@/lib/localdb';
-import { pullRemoteData, syncAddCategory, syncDeleteCategory } from '@/lib/sync';
+import { pullRemoteData, pushLocalData, syncAddCategory, syncDeleteCategory } from '@/lib/sync';
 
 interface DashboardStats {
   totalThisMonth: number;
@@ -89,6 +89,8 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     }
 
     try {
+      // First push any pending offline changes, then pull the latest remote data
+      await pushLocalData();
       await pullRemoteData();
       
       // Seed default categories if user has NONE (neither in Supabase nor Local)
@@ -115,11 +117,27 @@ export const ExpenseDataProvider = ({ children }: { children: React.ReactNode })
     }
   }, [user]);
 
-  // Automatically fetch remote changes when app mounts & user logs in
+  // Automatically fetch remote changes and listen for aggressive sync triggers
   useEffect(() => {
-    if (user) {
-      fetchSupabaseBackground();
-    }
+    if (!user) return;
+
+    fetchSupabaseBackground();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSupabaseBackground();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', fetchSupabaseBackground);
+    window.addEventListener('sage_sync_requested', fetchSupabaseBackground);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', fetchSupabaseBackground);
+      window.removeEventListener('sage_sync_requested', fetchSupabaseBackground);
+    };
   }, [user, fetchSupabaseBackground]);
 
   const addCategory = useCallback(async (name: string, type: 'expense' | 'income', color?: string, ai_hints?: string) => {

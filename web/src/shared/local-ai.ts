@@ -386,10 +386,34 @@ export function extractEntities(
 // Category Classification (Dynamic Hint Matching)
 // ---------------------------------------------------------------------------
 
-export function classifyCategory(text: string, userCategories: AICategory[] = []): string {
+export function classifyCategory(
+    text: string, 
+    userCategories: AICategory[] = [], 
+    pastTransactions: { note?: string, category: string, date: string }[] = []
+): string {
     const textLower = text.toLowerCase();
 
-    // Dynamically build keywords from user's custom hints
+    // 1. First check past transactions for a matching note
+    if (pastTransactions.length > 0) {
+        // Sort by date descending to get the most recent categorization
+        const sortedTx = [...pastTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        for (const tx of sortedTx) {
+            if (tx.note && tx.note.trim() !== '') {
+                const noteLower = tx.note.toLowerCase().trim();
+                // If the past note is long enough and found in our new message, reuse its category
+                if (noteLower.length >= 3 && textLower.includes(noteLower)) {
+                    // Ensure the category still exists in user's current categories
+                    const exists = userCategories.length === 0 || userCategories.some(c => c.name.toLowerCase() === tx.category.toLowerCase());
+                    if (exists) {
+                        return tx.category;
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Dynamically build keywords from user's custom hints
     const categoryKeywords: Record<string, string[]> = {};
     
     // Fallback backward compatibility map (Always load, then let user categories override)
@@ -554,7 +578,7 @@ function buildResponse(
         case 'add_expense': {
             const amount = extracted?.amount || 0;
             const currency = extracted?.currency || baseCurrency;
-            const category = extracted?.category || classifyCategory(originalQuery, expenseCategories);
+            const category = extracted?.category || classifyCategory(originalQuery, expenseCategories, expenses);
             const note = extracted?.note || category;
             const date = extracted?.date || toLocalDateString(new Date());
 
@@ -589,7 +613,7 @@ function buildResponse(
         case 'add_income': {
             const amount = extracted?.amount || 0;
             const currency = extracted?.currency || baseCurrency;
-            const category = extracted?.category || classifyCategory(originalQuery, incomeCategories);
+            const category = extracted?.category || classifyCategory(originalQuery, incomeCategories, incomes);
             const note = extracted?.note || category;
             const date = extracted?.date || toLocalDateString(new Date());
 
@@ -632,9 +656,16 @@ function buildResponse(
         }
 
         case 'add_recurring': {
+            const isIncome = /\b(?:income|salary|paycheck|earned|received|deposited|made|salary|bonus|freelance)\b/i.test(originalQuery);
+            const type = isIncome ? 'income' : 'expense';
+
             const amount = extracted?.amount || 0;
             const currency = extracted?.currency || baseCurrency;
-            const category = extracted?.category || classifyCategory(extracted?.note || '');
+            const category = extracted?.category || classifyCategory(
+                extracted?.note || '', 
+                isIncome ? incomeCategories : expenseCategories,
+                isIncome ? incomes : expenses
+            );
             const note = extracted?.note || category;
             const frequency = extracted?.frequency || 'monthly';
             const interval = extracted?.interval || 1;
@@ -645,9 +676,6 @@ function buildResponse(
             const day_of_week = extracted?.day_of_week ?? schedule.day_of_week;
             const day_of_month = extracted?.day_of_month ?? schedule.day_of_month;
             const month_of_year = extracted?.month_of_year ?? schedule.month_of_year;
-
-            const isIncome = /\b(?:income|salary|paycheck|earned|received|deposited|made|salary|bonus|freelance)\b/i.test(originalQuery);
-            const type = isIncome ? 'income' : 'expense';
 
             const freqStr = interval > 1 ? `every ${interval} ${frequency.replace('ly', 's')}` : frequency;
             answer = `I've set up a ${freqStr} ${type} for ${formatCurrency(amount, locale, currency)} (${note}).`;
@@ -947,7 +975,8 @@ export async function processChat(
     if (pendingAction && (pendingAction.type === 'add_expense' || pendingAction.type === 'add_income' || pendingAction.type === 'add_recurring')) {
         // Try to see if message is a category
         const cats = pendingAction.type === 'add_income' ? incomeCategories : expenseCategories;
-        const cat = classifyCategory(message, cats);
+        const pastTx = pendingAction.type === 'add_income' ? incomes : expenses;
+        const cat = classifyCategory(message, cats, pastTx);
         
         // If the user replied with something that matched a category, or just a single word
         // we'll assume they're confirming the category.
